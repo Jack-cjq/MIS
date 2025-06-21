@@ -1,0 +1,20 @@
+server:
+  port: 1010
+  servlet:
+    context-path: /SCSE@hbut
+
+spring:
+  data:
+    mongodb:
+      # URI方式配置（推荐）
+      uri: mongodb://127.0.0.1:27017/msi?connectTimeoutMS=50000
+      # 或拆分属性配置：
+      # host: 127.0.0.1
+      # port: 27017
+      # database: msi
+      # connect-timeout: 50000  # 毫秒，短横线命名
+
+logging:
+  level:
+    org.springframework.data.mongodb: DEBUG
+    com.mongodb.client: DEBUG
