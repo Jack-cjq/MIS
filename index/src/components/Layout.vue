@@ -53,6 +53,10 @@
               <el-icon><Connection /></el-icon>
               <span>校友管理模块</span>
             </el-menu-item>
+            <el-menu-item index="/party">
+              <el-icon><Flag /></el-icon>
+              <span>党员管理模块</span>
+            </el-menu-item>
           </el-menu>
         </el-aside>
         <el-main class="main">
@@ -74,7 +78,8 @@ import {
   Briefcase, 
   Trophy, 
   Connection, 
-  ArrowDown 
+  ArrowDown,
+  Flag
 } from '@element-plus/icons-vue'
 
 const route = useRoute()

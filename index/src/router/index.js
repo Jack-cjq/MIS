@@ -42,6 +42,12 @@ const routes = [
         name: 'alumni',
         component: () => import('../views/Alumni.vue'),
         meta: { title: '校友管理模块' }
+      },
+      {
+        path: '/party',
+        name: 'party',
+        component: () => import('../views/Party.vue'),
+        meta: { title: '党员管理模块' }
       }
     ]
   },
