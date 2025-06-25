@@ -1,0 +1,16 @@
+package org.example.response;
+
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+
+@AllArgsConstructor
+@Getter
+public enum ResponseCode {
+    OK(200, "成功"),
+    ERROR(10000, "错误"),
+    STUDENT_NOT_FOUND(10001, "学生不存在"),
+    ;
+    private final Integer code;
+    private final String message;
+
+}
