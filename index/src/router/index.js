@@ -68,20 +68,18 @@ const router = createRouter({
   routes
 })
 
-// 路由守卫
+// 全局前置守卫：未登录自动跳转到登录页
 router.beforeEach((to, from, next) => {
-  // 设置页面标题
-  document.title = to.meta.title ? `${to.meta.title} - 学生管理系统` : '学生管理系统'
-  
-  // 这里可以添加登录验证逻辑
-  // const token = localStorage.getItem('token')
-  // if (to.path !== '/login' && !token) {
-  //   next('/login')
-  // } else {
-  //   next()
-  // }
-  
-  next()
+  if (to.path === '/login') {
+    next()
+    return
+  }
+  const token = localStorage.getItem('token')
+  if (!token) {
+    next('/login')
+  } else {
+    next()
+  }
 })
 
 export default router

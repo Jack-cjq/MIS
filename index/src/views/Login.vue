@@ -14,10 +14,10 @@
         class="login-form"
         label-width="0"
       >
-        <el-form-item prop="username">
+        <el-form-item prop="account">
           <el-input
-            v-model="loginForm.username"
-            placeholder="请输入用户名"
+            v-model="loginForm.account"
+            placeholder="请输入学号/身份证号"
             prefix-icon="User"
             size="large"
           />
@@ -56,22 +56,25 @@
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue'
+import { ref, reactive, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { useStore } from 'vuex'
 import { ElMessage } from 'element-plus'
+import { studentLogin } from '@/api/student'
 
 const router = useRouter()
+const store = useStore()
 const loginFormRef = ref()
 const loading = ref(false)
 
 const loginForm = reactive({
-  username: '',
+  account: '',
   password: ''
 })
 
 const loginRules = {
-  username: [
-    { required: true, message: '请输入用户名', trigger: 'blur' }
+  account: [
+    { required: true, message: '请输入学号/身份证号', trigger: 'blur' }
   ],
   password: [
     { required: true, message: '请输入密码', trigger: 'blur' }
@@ -80,29 +83,47 @@ const loginRules = {
 
 const handleLogin = async () => {
   try {
-    await loginFormRef.value.validate()
-    loading.value = true
+    console.log(1111111111111111);
     
-    // 模拟登录请求
-    setTimeout(() => {
-      if (loginForm.username === 'admin' && loginForm.password === '123456') {
-        localStorage.setItem('token', 'mock-token')
-        localStorage.setItem('user', JSON.stringify({
-          username: loginForm.username,
-          role: 'admin'
-        }))
-        ElMessage.success('登录成功')
-        router.push('/')
-      } else {
-        ElMessage.error('用户名或密码错误')
-      }
-      loading.value = false
-    }, 1000)
+    await loginFormRef.value.validate()
+    console.log(2222222222222222);
+    
+    loading.value = true
+    console.log(3333333333333333);
+    
+    const res = await studentLogin(loginForm.account, loginForm.password)
+    console.log(res);
+    
+    if (res.code === 200) {
+      store.commit('setUser', res.data)
+      store.dispatch('setToken', 'mock-token') // 这里可替换为后端返回的token
+      ElMessage.success(res.msg)
+      router.push('/')
+    } else {
+      ElMessage.error(res.msg)
+    }
   } catch (error) {
-    console.error('登录失败:', error)
+    ElMessage.error('登录失败')
+  } finally {
     loading.value = false
   }
 }
+
+// 定时检查token是否过期，过期则自动登出并跳转
+let timer = null
+const checkTokenAndLogout = () => {
+  store.dispatch('checkToken')
+  if (!store.state.user) {
+    ElMessage.warning('登录已过期，请重新登录')
+    router.push('/login')
+  }
+}
+onMounted(() => {
+  timer = setInterval(checkTokenAndLogout, 5000) // 每5秒检查一次
+})
+onUnmounted(() => {
+  if (timer) clearInterval(timer)
+})
 </script>
 
 <style scoped>

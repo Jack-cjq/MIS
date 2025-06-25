@@ -29,26 +29,16 @@ request.interceptors.request.use(
 // 响应拦截器
 request.interceptors.response.use(
   response => {
-    const { data } = response
-    
-    // 根据后端返回的数据结构进行处理
-    if (data.code === 200) {
-      return data.data
-    } else {
-      ElMessage.error(data.message || '请求失败')
-      return Promise.reject(new Error(data.message || '请求失败'))
-    }
+    // 只返回后端data，业务判断交给页面
+    return response.data
   },
   error => {
     console.error('响应错误:', error)
-    
     if (error.response) {
       const { status, data } = error.response
-      
       switch (status) {
         case 401:
           ElMessage.error('未授权，请重新登录')
-          // 可以在这里处理登录过期逻辑
           break
         case 403:
           ElMessage.error('拒绝访问')
@@ -67,7 +57,6 @@ request.interceptors.response.use(
     } else {
       ElMessage.error('请求配置错误')
     }
-    
     return Promise.reject(error)
   }
 )
