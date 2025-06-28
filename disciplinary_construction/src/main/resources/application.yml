@@ -18,3 +18,10 @@ logging:
   level:
     org.springframework.data.mongodb: DEBUG
     com.mongodb.client: DEBUG
+
+knife4j:
+  enable: true
+  openapi:
+    title: MSI后台测试
+    description: "MSI后台测试"
+    concat: 信息化建设小组
