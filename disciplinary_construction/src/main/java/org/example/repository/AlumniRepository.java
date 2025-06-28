@@ -6,5 +6,5 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface AlumniRepository extends MongoRepository<AlumniModel, String> {
-
+    AlumniModel findAlumniByStudentId(String studentId);
 }

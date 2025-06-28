@@ -9,9 +9,9 @@ public interface AlumniService {
 
     void updateAlumni(AlumniModel alumniModel);//修改校友信息
 
-    AlumniModel searchAlumniByStudentId(String studentId);//查询当前学生的校友信息
+    AlumniModel findAlumniByStudentId(String studentId);//查询当前学生的校友信息
 
-    List<AlumniModel> searchAlumniByName(String name);
+    List<AlumniModel> findAlumniByName(String name);
 
     List<AlumniModel> findAllAlumni();//查询所有校友信息
 }
