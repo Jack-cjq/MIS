@@ -13,5 +13,7 @@ public interface AlumniService {
 
     List<AlumniModel> findAlumniByName(String name);
 
-    List<AlumniModel> findAllAlumni();//查询所有校友信息
+    List<AlumniModel> searchAlumniList(String searchValue, Integer currentPage, Integer pageSize);//查询校友信息（模糊查询：学号、姓名、所在单位），提供分页
+
+    Long getTotalCount(String searchValue);
 }

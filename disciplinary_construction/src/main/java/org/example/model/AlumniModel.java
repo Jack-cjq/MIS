@@ -17,6 +17,7 @@ public class AlumniModel {
     @Id
     private String id;//主键
     private String studentId;//学号
+    private StudentModel student;
     private LocalDate enrollmentDate;//入学年份
     private LocalDate graduationDate;//毕业年份
     private Map<String, String> workLocation;//就业地区（province：省；city：市；district：区）

@@ -10,9 +10,9 @@ import org.example.service.Impl.StudentServeiceImpl;
 
 @SpringBootApplication(exclude = DataSourceAutoConfiguration.class)
 
-public class MyApplication {
+public class MISApplication {
     public static void main(String[] args) {
-        SpringApplication.run(MyApplication.class, args);
+        SpringApplication.run(MISApplication.class, args);
     }
 
     @Bean

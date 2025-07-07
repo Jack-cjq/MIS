@@ -47,14 +47,22 @@ public class AlumniController {
     @Operation(summary = "通过名称查询校友信息")
     @PostMapping("/findAlumniByName")
     public ResponseResult<List<AlumniModel>> findAlumniByName(String name) {
-        List<AlumniModel> alumniList = alumniService.findAlumniByName(name);
-        return ResponseResult.success(alumniList);
+        return ResponseResult.success(alumniService.findAlumniByName(name));
     }
 
-    @Operation(summary = "查询所有校友信息")
+    @Operation(summary = "分页模糊查询校友信息")
     @PostMapping("/findAllAlumni")
-    public ResponseResult<List<AlumniModel>> findAllAlumni() {
-        List<AlumniModel> alumniList = alumniService.findAllAlumni();
-        return ResponseResult.success(alumniList);
+    public ResponseResult<List<AlumniModel>> findAllAlumni(
+            String searchValue,
+            @RequestParam(defaultValue = "1") Integer currentPage,
+            @RequestParam(defaultValue = "10") Integer pageSize
+    ) {
+        return ResponseResult.success(alumniService.searchAlumniList(searchValue, currentPage, pageSize));
+    }
+
+    @Operation(summary = "分页模糊查询校友信息个数")
+    @PostMapping("/getTotalCount")
+    public ResponseResult<Long> getTotalCount(String searchValue) {
+        return ResponseResult.success(alumniService.getTotalCount(searchValue));
     }
 }

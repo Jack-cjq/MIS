@@ -1,6 +1,7 @@
 package org.example.service.Impl;
 
 import lombok.extern.slf4j.Slf4j;
+import org.bson.Document;
 import org.example.exception.BusinessException;
 import org.example.model.AlumniModel;
 import org.example.model.StudentModel;
@@ -9,9 +10,10 @@ import org.example.repository.StudentRepository;
 import org.example.response.ResponseCode;
 import org.example.service.AlumniService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContext;
-import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.aggregation.Aggregation;
+import org.springframework.data.mongodb.core.aggregation.AggregationResults;
+import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.stereotype.Service;
 
 import java.util.Collections;
@@ -20,6 +22,8 @@ import java.util.List;
 @Slf4j
 @Service
 public class AlumniServiceImpl implements AlumniService {
+    @Autowired
+    private MongoTemplate mongoTemplate;
     @Autowired
     private AlumniRepository alumniRepository;
     @Autowired
@@ -47,6 +51,7 @@ public class AlumniServiceImpl implements AlumniService {
         }
         //4.进入数据库
         alumniModel.setId(null);
+        alumniModel.setStudent(null);
         alumniRepository.insert(alumniModel);
 
     }
@@ -68,6 +73,7 @@ public class AlumniServiceImpl implements AlumniService {
         }
         //4.进入数据库
         alumniModel.setId(data.getId());
+        alumniModel.setStudent(null);
         alumniRepository.save(alumniModel);
     }
 
@@ -82,7 +88,13 @@ public class AlumniServiceImpl implements AlumniService {
     }
 
     @Override
-    public List<AlumniModel> findAllAlumni() {
-        return alumniRepository.findAll();
+    public List<AlumniModel> searchAlumniList(String searchValue, Integer currentPage, Integer pageSize) {
+        return alumniRepository.searchAlumniList(searchValue, (currentPage - 1) * pageSize, pageSize);
+    }
+
+    @Override
+    public Long getTotalCount(String searchValue) {
+        Long result = alumniRepository.getTotalCount(searchValue);
+        return result == null ? 0 : result;
     }
 }
