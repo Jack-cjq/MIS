@@ -6,20 +6,18 @@
         <div class="card-header">
           <span>校友信息</span>
           <div class="search-group">
-            <el-input v-model="searchValue" placeholder="搜索校友姓名或公司" style="width: 200px; margin-right: 10px" clearable >
+            <el-input v-model="searchValue" placeholder="搜索校友姓名、学号或公司"
+                      @keyup.enter="handleSearch()"
+                      style="width: 250px; margin-right: 10px"
+                      clearable>
               <template #prefix>
                 <el-icon>
                   <Search/>
                 </el-icon>
               </template>
             </el-input>
-            <el-select v-model="filterYear" placeholder="毕业年份" style="width: 120px;margin-right: 10px">
-              <el-option label="全部年份" value=""/>
-              <el-option label="2023年" value="2023"/>
-              <el-option label="2022年" value="2022"/>
-              <el-option label="2021年" value="2021"/>
-              <el-option label="2020年" value="2020"/>
-            </el-select>
+            <el-date-picker v-model="searchYear" type="year" placeholder="毕业年份"
+                            style="width: 120px;margin-right: 10px"/>
             <el-button type="danger" @click="handleSearch()">搜索</el-button>
           </div>
         </div>
@@ -29,14 +27,22 @@
         <el-table-column prop="studentId" label="学号" width="180"/>
         <el-table-column label="性别" width="180">
           <template #default="scope">
-            <el-tag :type="scope.row.student.gender === '男' ? 'primary' : 'success'" size="large">
+            <el-tag :type="scope.row.student.gender === '男' ? 'primary' : 'danger'" effect="light">
               {{ scope.row.student.gender }}
             </el-tag>
           </template>
         </el-table-column>
         <el-table-column prop="student.major" label="专业"/>
-        <el-table-column prop="enrollmentDate" label="入学年份"/>
-        <el-table-column prop="graduationDate" label="毕业年份"/>
+        <el-table-column prop="enrollmentDate" label="入学年份">
+          <template #default="scope">
+            <el-tag type="primary">{{ scope.row.enrollmentDate }}</el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column prop="graduationDate" label="毕业年份">
+          <template #default="scope">
+            <el-tag type="success">{{ scope.row.graduationDate }}</el-tag>
+          </template>
+        </el-table-column>
         <el-table-column label="就业地区">
           <template #default="scope">
             {{
@@ -50,7 +56,7 @@
         <el-table-column label="操作">
           <template #default="scope">
             <el-button type="primary" @click="showAlumniDetail(scope.row)">校友详情</el-button>
-            <el-button type="success">联系校友</el-button>
+            <el-button type="warning" @click="updateAlumniDetail(scope.row)">修改信息</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -116,32 +122,40 @@
       </template>
     </el-dialog>
 
-    <!-- 联系校友对话框 -->
-    <el-dialog v-model="showAlumniContactDialog" title="联系校友" width="500px">
-      <el-form :model="contactForm" :rules="contactRules" ref="contactFormRef" label-width="100px">
+    <!-- 修改信息对话框 -->
+    <el-dialog v-model="showAlumniUpdateDialog" @closed="onUpdateAlumniDialogClose" title="修改校友信息" width="800px">
+      <el-form :model="updateForm" :rules="formRules" ref="updateFormRef" label-width="100px">
         <el-form-item label="校友姓名">
-          <el-input v-model="contactForm.alumniName" disabled/>
+          <el-input v-model="updateForm.name" disabled/>
         </el-form-item>
-        <el-form-item label="联系方式" prop="contactMethod">
-          <el-radio-group v-model="contactForm.contactMethod">
-            <el-radio label="邮箱">邮箱</el-radio>
-            <el-radio label="微信">微信</el-radio>
-            <el-radio label="电话">电话</el-radio>
-          </el-radio-group>
+        <el-form-item label="学号">
+          <el-input v-model="updateForm.studentId" disabled/>
         </el-form-item>
-        <el-form-item label="联系内容" prop="content">
-          <el-input
-              v-model="contactForm.content"
-              type="textarea"
-              :rows="4"
-              placeholder="请输入联系内容"
-          />
+        <el-form-item label="入学年份" prop="enrollmentDate">
+          <el-date-picker v-model="updateForm.enrollmentDate" type="date" placeholder="选择入学年份"/>
         </el-form-item>
+        <el-form-item label="毕业年份" prop="graduationDate">
+          <el-date-picker v-model="updateForm.graduationDate" type="date" placeholder="选择毕业年份"/>
+        </el-form-item>
+        <el-form-item label="就业地区" prop="workLocation">
+          <el-cascader :options="regionData" v-model="updateForm.workLocation" placeholder="选择就业地区">
+          </el-cascader>
+        </el-form-item>
+        <el-form-item label="所在行业" prop="workField">
+          <el-input v-model="updateForm.workField" type="textarea" :rows="3" placeholder="请输入所在行业"/>
+        </el-form-item>
+        <el-form-item label="所在单位" prop="workPlace">
+          <el-input v-model="updateForm.workPlace" type="textarea" :rows="3" placeholder="请输入所在单位"/>
+        </el-form-item>
+        <el-form-item label="岗位类型" prop="jobType">
+          <el-input v-model="updateForm.jobType" type="textarea" :rows="3" placeholder="请输入岗位类型"/>
+        </el-form-item>
+
       </el-form>
       <template #footer>
         <span class="dialog-footer">
-          <el-button @click="showContactDialog = false">取消</el-button>
-          <el-button type="primary" @click="submitContact">发送联系</el-button>
+          <el-button @click="showAlumniUpdateDialog = false">取消</el-button>
+          <el-button type="primary" @click="submitUpdateAlumni">确认</el-button>
         </span>
       </template>
     </el-dialog>
@@ -150,16 +164,17 @@
 </template>
 
 <script setup>
-import {ref, reactive, computed, onMounted} from 'vue'
-import {ElMessage} from 'element-plus'
+import {onMounted, reactive, ref} from 'vue'
 import {Search} from '@element-plus/icons-vue'
-import {getAlumniList, joinAlumniActivity, getTotalCount} from '@/api/alumni'
+import {getAlumniList, getTotalCount, updateAlumni} from '@/api/alumni'
+import {CodeToText, regionData, TextToCode} from '@/utils/china-area-data.js'
+import {dayjs, ElMessage} from "element-plus";
 
-const showAlumniContactDialog = ref(false)
 const showAlumniDetailDialog = ref(false)
-const contactFormRef = ref()
+const showAlumniUpdateDialog = ref(false)
+const updateFormRef = ref()
 const searchValue = ref('')
-const filterYear = ref('')
+const searchYear = ref(null)
 const selectedAlumni = ref(null)
 
 const pageData = reactive({
@@ -168,28 +183,45 @@ const pageData = reactive({
   totalCount: 0,
 })
 
-const contactForm = reactive({
-  alumniName: '',
-  contactMethod: '邮箱',
-  content: ''
+const updateForm = reactive({
+  studentId: '',
+  name: '',
+  enrollmentDate: null,
+  graduationDate: null,
+  workLocation: [],
+  workField: '',
+  workPlace: '',
+  jobType: '',
 })
 
-const contactRules = {
-  contactMethod: [
-    {required: true, message: '请选择联系方式', trigger: 'change'}
+const formRules = reactive({
+  enrollmentDate: [
+    {required: true, message: '请选择入学年份', trigger: 'change'},
   ],
-  content: [
-    {required: true, message: '请输入联系内容', trigger: 'blur'}
+  graduationDate: [
+    {required: true, message: '请输入毕业年份', trigger: 'change'}
+  ],
+  workLocation: [
+    {required: true, message: '请选择就业地区', trigger: 'change'}
+  ],
+  workField: [
+    {required: true, message: '请输入所在行业', trigger: 'change'}
+  ],
+  workPlace: [
+    {required: true, message: '请输入所在单位', trigger: 'change'}
+  ],
+  jobType: [
+    {required: true, message: '请输入岗位类型', trigger: 'change'}
   ]
-}
+})
 
 const alumniList = ref([])
 
 const loadData = async () => {
   try {
     const [alumniData, totalCount] = await Promise.all([
-      getAlumniList(searchValue.value),
-      getTotalCount(searchValue.value)
+      getAlumniList(searchValue.value, searchYear.value === null ? '' : searchYear.value.getFullYear(), pageData.currentPage, pageData.pageSize),
+      getTotalCount(searchValue.value, searchYear.value === null ? '' : searchYear.value.getFullYear())
     ])
     alumniList.value = alumniData.data
     pageData.totalCount = totalCount.data
@@ -198,32 +230,79 @@ const loadData = async () => {
   }
 }
 
-const contactAlumni = (alumni) => {
-  contactForm.alumniName = alumni.name
-  showAlumniContactDialog.value = true
-}
-
 //弹出校友详细信息弹窗
 const showAlumniDetail = (alumni) => {
   selectedAlumni.value = alumni
   showAlumniDetailDialog.value = true
 }
 
-const submitContact = async () => {
+const updateAlumniDetail = (alumni) => {
+  updateForm.name = alumni.student.name
+  updateForm.studentId = alumni.studentId
+  updateForm.enrollmentDate = new Date(alumni.enrollmentDate)
+  updateForm.graduationDate = new Date(alumni.graduationDate)
+  updateForm.workLocation = [
+    TextToCode[alumni.workLocation.province].code,
+    TextToCode[alumni.workLocation.province][alumni.workLocation.city].code,
+    TextToCode[alumni.workLocation.province][alumni.workLocation.city][alumni.workLocation.district].code,
+  ]
+  updateForm.workField = alumni.workField
+  updateForm.workPlace = alumni.workPlace
+  updateForm.jobType = alumni.jobType
+  showAlumniUpdateDialog.value = true
+}
+
+const submitUpdateAlumni = async () => {
   try {
-    await contactFormRef.value.validate()
-    // 这里应该调用实际的API
-    ElMessage.success('联系请求已发送')
-    showAlumniContactDialog.value = false
-    Object.assign(contactForm, {
-      alumniName: '',
-      contactMethod: '邮箱',
-      content: ''
-    })
-  } catch (error) {
-    console.error('发送失败:', error)
-    ElMessage.error('发送失败')
+    await updateFormRef.value.validate();
+  } catch (fields) {
+    console.log('error submit!', fields)
+    return
   }
+
+  if (updateForm.enrollmentDate > updateForm.graduationDate) {
+    ElMessage.warning('毕业年份不能小于入学年份！')
+    return;
+  }
+
+  let data = {
+    studentId: updateForm.studentId,
+    name: updateForm.name,
+    enrollmentDate: dayjs(updateForm.enrollmentDate).format('YYYY-MM-DD'),
+    graduationDate: dayjs(updateForm.graduationDate).format('YYYY-MM-DD'),
+    workLocation: {
+      'province': CodeToText[updateForm.workLocation[0]],
+      'city': CodeToText[updateForm.workLocation[1]],
+      'district': CodeToText[updateForm.workLocation[2]]
+    },
+    workField: updateForm.workField,
+    workPlace: updateForm.workPlace,
+    jobType: updateForm.jobType,
+  }
+
+  try {
+    let response = await updateAlumni(data);
+    if (response.code === 200) {
+      ElMessage.success('修改成功')
+    } else {
+      ElMessage.error(response.message)
+    }
+    showAlumniUpdateDialog.value = false
+  } catch (error) {
+    ElMessage.error('修改失败')
+  }
+}
+
+const onUpdateAlumniDialogClose = () => {
+  updateForm.name = ''
+  updateForm.studentId = ''
+  updateForm.enrollmentDate = null
+  updateForm.graduationDate = null
+  updateForm.workLocation = []
+  updateForm.workField = ''
+  updateForm.workPlace = ''
+  updateForm.jobType = ''
+  loadData()
 }
 
 const handleSearch = () => {

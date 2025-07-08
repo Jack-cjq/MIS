@@ -1,31 +1,22 @@
-// 写api接口时取消该行注释
-// import request from './request'
-
 // 校友管理模块
 import request from "@/api/request";
 
-export function getAlumniList(searchValue) {
+export function getAlumniList(searchValue, searchYear, currentPage, pageSize) {
     return request.post(
         '/alumni/findAllAlumni',
-        {searchValue: searchValue},
+        {searchValue: searchValue, searchYear: searchYear, currentPage: currentPage, pageSize: pageSize},
         {headers: {'Content-Type': 'application/x-www-form-urlencoded',}}
     )
 }
 
-export function getTotalCount(searchValue) {
+export function getTotalCount(searchValue, searchYear) {
     return request.post(
         '/alumni/getTotalCount',
-        {searchValue: searchValue},
+        {searchValue: searchValue, searchYear: searchYear},
         {headers: {'Content-Type': 'application/x-www-form-urlencoded',}}
     )
 }
 
-
-export function getAlumniActivities() {
-    return []
-}
-
-
-export function joinAlumniActivity() {
-
+export function updateAlumni(data) {
+    return request.post('/alumni/updateAlumni', data)
 }
