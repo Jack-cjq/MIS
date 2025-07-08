@@ -1,14 +1,20 @@
 package org.example.controller;
 
+import cn.hutool.core.date.DateUtil;
+import cn.hutool.core.date.LocalDateTimeUtil;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
+import org.example.exception.BusinessException;
 import org.example.model.AlumniModel;
+import org.example.response.ResponseCode;
 import org.example.response.ResponseResult;
 import org.example.service.AlumniService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.*;
+import java.util.Date;
 import java.util.List;
 
 @Slf4j
@@ -44,25 +50,39 @@ public class AlumniController {
         return ResponseResult.success(alumni);
     }
 
-    @Operation(summary = "通过名称查询校友信息")
-    @PostMapping("/findAlumniByName")
-    public ResponseResult<List<AlumniModel>> findAlumniByName(String name) {
-        return ResponseResult.success(alumniService.findAlumniByName(name));
-    }
-
     @Operation(summary = "分页模糊查询校友信息")
     @PostMapping("/findAllAlumni")
     public ResponseResult<List<AlumniModel>> findAllAlumni(
             String searchValue,
+            @RequestParam(defaultValue = "") String searchYear,
             @RequestParam(defaultValue = "1") Integer currentPage,
             @RequestParam(defaultValue = "10") Integer pageSize
     ) {
-        return ResponseResult.success(alumniService.searchAlumniList(searchValue, currentPage, pageSize));
+        Date year = null;
+        if (!searchYear.isEmpty()) {
+            year = Date.from(
+                    LocalDate.of(Integer.parseInt(searchYear), 1, 1)
+                            .atStartOfDay(ZoneId.of("Asia/Shanghai"))
+                            .toInstant()
+            );
+        }
+        return ResponseResult.success(alumniService.searchAlumniList(searchValue, year, currentPage, pageSize));
     }
 
     @Operation(summary = "分页模糊查询校友信息个数")
     @PostMapping("/getTotalCount")
-    public ResponseResult<Long> getTotalCount(String searchValue) {
-        return ResponseResult.success(alumniService.getTotalCount(searchValue));
+    public ResponseResult<Integer> getTotalCount(
+            String searchValue,
+            @RequestParam(defaultValue = "") String searchYear
+    ) {
+        Date year = null;
+        if (!searchYear.isEmpty()) {
+            year = Date.from(
+                    LocalDate.of(Integer.parseInt(searchYear), 1, 1)
+                            .atStartOfDay(ZoneId.of("Asia/Shanghai"))
+                            .toInstant()
+            );
+        }
+        return ResponseResult.success(alumniService.getTotalCount(searchValue, year));
     }
 }

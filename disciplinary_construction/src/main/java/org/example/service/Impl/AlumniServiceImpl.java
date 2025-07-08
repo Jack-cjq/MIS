@@ -1,5 +1,7 @@
 package org.example.service.Impl;
 
+import cn.hutool.core.date.DateField;
+import cn.hutool.core.date.DateUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.bson.Document;
 import org.example.exception.BusinessException;
@@ -11,12 +13,14 @@ import org.example.response.ResponseCode;
 import org.example.service.AlumniService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.MongoTemplate;
-import org.springframework.data.mongodb.core.aggregation.Aggregation;
-import org.springframework.data.mongodb.core.aggregation.AggregationResults;
+import org.springframework.data.mongodb.core.aggregation.*;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.stereotype.Service;
 
+import java.time.ZonedDateTime;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 
 @Slf4j
@@ -83,18 +87,74 @@ public class AlumniServiceImpl implements AlumniService {
     }
 
     @Override
-    public List<AlumniModel> findAlumniByName(String name) {
-        return Collections.emptyList();
+    public List<AlumniModel> searchAlumniList(String searchValue, Date searchYear, Integer currentPage, Integer pageSize) {
+        LookupOperation lookup = LookupOperation.newLookup()
+                .from("students")
+                .localField("studentId")
+                .foreignField("studentId")
+                .as("student");
+
+        UnwindOperation unwind = Aggregation.unwind("student", true);
+
+        Criteria criteria = new Criteria().orOperator(
+                Criteria.where("studentId").regex(searchValue, "i"),
+                Criteria.where("student.name").regex(searchValue, "i"),
+                Criteria.where("workPlace").regex(searchValue, "i")
+        );
+
+        MatchOperation match = null;
+
+        if (searchYear == null) {
+            match = Aggregation.match(criteria);
+        } else {
+            Criteria yearCriteria = new Criteria().andOperator(
+                    criteria,
+                    Criteria.where("graduationDate").gte(searchYear).lt(DateUtil.offset(searchYear, DateField.YEAR, 1))
+            );
+            match = Aggregation.match(yearCriteria);
+        }
+
+        SkipOperation skipOp = Aggregation.skip((currentPage - 1) * pageSize);
+        LimitOperation limitOp = Aggregation.limit(pageSize);
+        Aggregation aggregation = Aggregation.newAggregation(lookup, unwind, match, skipOp, limitOp);
+
+        // 执行聚合查询
+        return mongoTemplate.aggregate(aggregation, "alumni", AlumniModel.class).getMappedResults();
     }
 
     @Override
-    public List<AlumniModel> searchAlumniList(String searchValue, Integer currentPage, Integer pageSize) {
-        return alumniRepository.searchAlumniList(searchValue, (currentPage - 1) * pageSize, pageSize);
-    }
+    public Integer getTotalCount(String searchValue, Date searchYear) {
+        LookupOperation lookup = LookupOperation.newLookup()
+                .from("students")
+                .localField("studentId")
+                .foreignField("studentId")
+                .as("student");
 
-    @Override
-    public Long getTotalCount(String searchValue) {
-        Long result = alumniRepository.getTotalCount(searchValue);
-        return result == null ? 0 : result;
+        UnwindOperation unwind = Aggregation.unwind("student", true);
+
+        Criteria criteria = new Criteria().orOperator(
+                Criteria.where("studentId").regex(searchValue, "i"),
+                Criteria.where("student.name").regex(searchValue, "i"),
+                Criteria.where("workPlace").regex(searchValue, "i")
+        );
+
+        MatchOperation match = null;
+
+        if (searchYear == null) {
+            match = Aggregation.match(criteria);
+        } else {
+            Criteria yearCriteria = new Criteria().andOperator(
+                    criteria,
+                    Criteria.where("graduationDate").gte(searchYear).lt(DateUtil.offset(searchYear, DateField.YEAR, 1))
+            );
+            match = Aggregation.match(yearCriteria);
+        }
+
+        CountOperation count = Aggregation.count().as("total");
+        Aggregation aggregation = Aggregation.newAggregation(lookup, unwind, match, count);
+
+        AggregationResults<Document> result = mongoTemplate.aggregate(aggregation, "alumni", Document.class);
+        Document countDoc = result.getUniqueMappedResult();
+        return countDoc != null ? countDoc.getInteger("total", 0) : 0;
     }
 }

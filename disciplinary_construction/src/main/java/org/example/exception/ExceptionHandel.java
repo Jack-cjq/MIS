@@ -15,7 +15,6 @@ public class ExceptionHandel {
     }
 
     @ExceptionHandler(BusinessException.class)
-    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public ResponseResult<String> handelBusinessException(BusinessException exception) {
         log.error("发生BusinessException：{}", exception.getResponseCode());
         return ResponseResult.error(exception.getResponseCode());
