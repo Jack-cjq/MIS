@@ -51,8 +51,8 @@ public class AlumniController {
     }
 
     @Operation(summary = "分页模糊查询校友信息")
-    @PostMapping("/findAllAlumni")
-    public ResponseResult<List<AlumniModel>> findAllAlumni(
+    @PostMapping("/searchAlumniList")
+    public ResponseResult<List<AlumniModel>> searchAlumniList(
             String searchValue,
             @RequestParam(defaultValue = "") String searchYear,
             @RequestParam(defaultValue = "1") Integer currentPage,

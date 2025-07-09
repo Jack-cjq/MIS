@@ -83,7 +83,7 @@ public class AlumniServiceImpl implements AlumniService {
 
     @Override
     public AlumniModel findAlumniByStudentId(String studentId) {
-        return null;
+        return alumniRepository.findAlumniByStudentId(studentId);
     }
 
     @Override
