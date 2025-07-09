@@ -1,9 +1,9 @@
 // 校友管理模块
 import request from "@/api/request";
 
-export function getAlumniList(searchValue, searchYear, currentPage, pageSize) {
+export function searchAlumniList(searchValue, searchYear, currentPage, pageSize) {
     return request.post(
-        '/alumni/findAllAlumni',
+        '/alumni/searchAlumniList',
         {searchValue: searchValue, searchYear: searchYear, currentPage: currentPage, pageSize: pageSize},
         {headers: {'Content-Type': 'application/x-www-form-urlencoded',}}
     )
@@ -19,4 +19,16 @@ export function getTotalCount(searchValue, searchYear) {
 
 export function updateAlumni(data) {
     return request.post('/alumni/updateAlumni', data)
+}
+
+export function insertAlumni(data) {
+    return request.post('/alumni/insertAlumni', data)
+}
+
+export function findAlumniByStudentId(studentId) {
+    return request.post(
+        '/alumni/findAlumniByStudentId',
+        {studentId: studentId},
+        {headers: {'Content-Type': 'application/x-www-form-urlencoded',}}
+    )
 }

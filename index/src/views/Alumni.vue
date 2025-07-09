@@ -166,7 +166,7 @@
 <script setup>
 import {onMounted, reactive, ref} from 'vue'
 import {Search} from '@element-plus/icons-vue'
-import {getAlumniList, getTotalCount, updateAlumni} from '@/api/alumni'
+import {searchAlumniList, getTotalCount, updateAlumni} from '@/api/alumni'
 import {CodeToText, regionData, TextToCode} from '@/utils/china-area-data.js'
 import {dayjs, ElMessage} from "element-plus";
 
@@ -220,7 +220,7 @@ const alumniList = ref([])
 const loadData = async () => {
   try {
     const [alumniData, totalCount] = await Promise.all([
-      getAlumniList(searchValue.value, searchYear.value === null ? '' : searchYear.value.getFullYear(), pageData.currentPage, pageData.pageSize),
+      searchAlumniList(searchValue.value, searchYear.value === null ? '' : searchYear.value.getFullYear(), pageData.currentPage, pageData.pageSize),
       getTotalCount(searchValue.value, searchYear.value === null ? '' : searchYear.value.getFullYear())
     ])
     alumniList.value = alumniData.data
