@@ -1,0 +1,29 @@
+# Default ignored files
+/shelf/
+/workspace.xml
+# Editor-based HTTP Client requests
+/httpRequests/
+# Environment-dependent path to Maven home directory
+/mavenHomeManager.xml
+# Datasource local storage ignored files
+/dataSources/
+/dataSources.local.xml
+
+# Build output directories
+/target/
+
+# Node.js dependencies
+/node_modules/
+
+# Log files
+*.log
+
+# Uploaded files directory
+/uploads/
+
+# Java compiled files
+*.class
+
+# System generated files
+.DS_Store
+Thumbs.db
