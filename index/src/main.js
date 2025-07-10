@@ -11,6 +11,14 @@ import * as ElementPlusIconsVue from '@element-plus/icons-vue'
 // 引入中文语言包
 import zhCn from 'element-plus/dist/locale/zh-cn.mjs'
 
+// 解决 ResizeObserver 错误
+window.addEventListener('error', e => {
+    if (e.message === 'ResizeObserver loop completed with undelivered notifications.' ||
+        e.message === 'ResizeObserver loop limit exceeded') {
+        e.stopImmediatePropagation();
+    }
+});
+
 const app = createApp(App)
 
 // 注册所有图标
