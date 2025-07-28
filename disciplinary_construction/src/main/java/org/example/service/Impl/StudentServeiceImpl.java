@@ -33,7 +33,6 @@ public class StudentServeiceImpl implements StudentService {
     @Override
     public StudentModel login(String account, String password) {
         StudentModel student = studentRepository.findByStudentId(account);
-        System.out.print(student);
         if (student == null) {
             student = studentRepository.findByIdCard(account);
         }
@@ -44,6 +43,67 @@ public class StudentServeiceImpl implements StudentService {
             return student;
         }
         return null;
+    }
+
+    @Override
+    public List<StudentModel> findAllStudents() {
+        return studentRepository.findAll();
+    }
+
+    @Override
+    public StudentModel findById(String id) {
+        return studentRepository.findById(id).orElse(null);
+    }
+
+    @Override
+    public StudentModel createStudent(StudentModel student) {
+        student.setCreateTime(new java.util.Date());
+        student.setUpdateTime(new java.util.Date());
+        // 加密密码
+        if (student.getPassword() != null && !student.getPassword().startsWith("$2a$")) {
+            student.setPassword(passwordEncoder.encode(student.getPassword()));
+        }
+        return studentRepository.save(student);
+    }
+
+    @Override
+    public StudentModel updateStudent(StudentModel student) {
+        student.setUpdateTime(new java.util.Date());
+        // 如果密码没有加密，则加密
+        if (student.getPassword() != null && !student.getPassword().startsWith("$2a$")) {
+            student.setPassword(passwordEncoder.encode(student.getPassword()));
+        }
+        return studentRepository.save(student);
+    }
+
+    @Override
+    public boolean deleteStudent(String id) {
+        try {
+            studentRepository.deleteById(id);
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    @Override
+    public StudentModel findByStudentId(String studentId) {
+        return studentRepository.findByStudentId(studentId);
+    }
+
+    @Override
+    public List<StudentModel> findByName(String name) {
+        return studentRepository.findByName(name);
+    }
+
+    @Override
+    public List<StudentModel> findByMajor(String major) {
+        return studentRepository.findByMajor(major);
+    }
+
+    @Override
+    public List<StudentModel> findByGrade(String grade) {
+        return studentRepository.findByGrade(grade);
     }
 
     // 初始化一个默认学生用户

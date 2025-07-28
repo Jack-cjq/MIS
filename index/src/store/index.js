@@ -22,7 +22,10 @@ export default createStore({
     user: JSON.parse(localStorage.getItem('user')) || null
   },
   getters: {
-    user: state => state.user
+    user: state => state.user,
+    isAdmin: state => state.user && state.user.userType === 'admin',
+    isStudent: state => state.user && state.user.userType === 'student',
+    userType: state => state.user ? state.user.userType : null
   },
   mutations: {
     setUser(state, user) {

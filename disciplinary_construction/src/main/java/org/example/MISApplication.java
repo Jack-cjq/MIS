@@ -7,6 +7,7 @@ import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.context.annotation.Bean;
 import org.example.service.Impl.StudentServeiceImpl;
+import org.example.service.Impl.AdminServiceImpl;
 
 @SpringBootApplication(exclude = DataSourceAutoConfiguration.class)
 
@@ -16,7 +17,10 @@ public class MISApplication {
     }
 
     @Bean
-    public ApplicationRunner runner(StudentServeiceImpl studentServeice) {
-        return args -> studentServeice.createDefaultStudent();
+    public ApplicationRunner runner(StudentServeiceImpl studentServeice, AdminServiceImpl adminService) {
+        return args -> {
+            studentServeice.createDefaultStudent();
+            adminService.createDefaultAdmin();
+        };
     }
 }

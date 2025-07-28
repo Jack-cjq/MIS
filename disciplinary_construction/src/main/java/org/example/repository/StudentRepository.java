@@ -10,7 +10,7 @@ public interface StudentRepository extends MongoRepository<StudentModel, String>
     //自动支持：findAll(),findById(),save(),delete()
 
     //自定义查询方法（根据方法名自动解析）
-    // List<StudentModel> findByName(String name);
+    List<StudentModel> findByName(String name);
 
     // //使用@Query注解编写复杂查询
     // @Query("{'age' : {$gte: ?0, $lte: ?1}")
@@ -20,4 +20,16 @@ public interface StudentRepository extends MongoRepository<StudentModel, String>
     StudentModel findByEmail(String email);
     StudentModel findByPhone(String phone);
     StudentModel findByIdCard(String idCard);
+    
+    // 根据专业查找学生
+    List<StudentModel> findByMajor(String major);
+    
+    // 根据年级查找学生
+    List<StudentModel> findByGrade(String grade);
+    
+    // 根据学籍状态查找学生
+    List<StudentModel> findByStatus(String status);
+    
+    // 根据政治面貌查找学生
+    List<StudentModel> findByPoliticalStatus(String politicalStatus);
 }

@@ -17,7 +17,7 @@
         <el-form-item prop="account">
           <el-input
             v-model="loginForm.account"
-            placeholder="请输入学号/身份证号"
+            :placeholder="isAdminLogin ? '请输入用户名' : '请输入学号/身份证号'"
             prefix-icon="User"
             size="large"
           />
@@ -36,6 +36,12 @@
         </el-form-item>
         
         <el-form-item>
+          <el-checkbox v-model="isAdminLogin" @change="handleLoginTypeChange">
+            管理员登录
+          </el-checkbox>
+        </el-form-item>
+        
+        <el-form-item>
           <el-button
             type="primary"
             size="large"
@@ -43,13 +49,14 @@
             :loading="loading"
             @click="handleLogin"
           >
-            登录
+            {{ isAdminLogin ? '管理员登录' : '学生登录' }}
           </el-button>
         </el-form-item>
       </el-form>
       
       <div class="login-footer">
-        <p>默认账号：admin / 密码：123456</p>
+        <p v-if="!isAdminLogin">学生默认账号：admin / 密码：123456</p>
+        <p v-else>管理员默认账号：admin / 密码：admin123</p>
       </div>
     </div>
   </div>
@@ -61,11 +68,13 @@ import { useRouter } from 'vue-router'
 import { useStore } from 'vuex'
 import { ElMessage } from 'element-plus'
 import { studentLogin } from '@/api/student'
+import { adminLogin } from '@/api/admin'
 
 const router = useRouter()
 const store = useStore()
 const loginFormRef = ref()
 const loading = ref(false)
+const isAdminLogin = ref(false)
 
 const loginForm = reactive({
   account: '',
@@ -74,31 +83,52 @@ const loginForm = reactive({
 
 const loginRules = {
   account: [
-    { required: true, message: '请输入学号/身份证号', trigger: 'blur' }
+    { required: true, message: '请输入账号', trigger: 'blur' }
   ],
   password: [
     { required: true, message: '请输入密码', trigger: 'blur' }
   ]
 }
 
+const handleLoginTypeChange = () => {
+  // 清空表单
+  loginForm.account = ''
+  loginForm.password = ''
+  if (loginFormRef.value) {
+    loginFormRef.value.clearValidate()
+  }
+}
+
 const handleLogin = async () => {
   try {
-    console.log(1111111111111111);
-    
     await loginFormRef.value.validate()
-    console.log(2222222222222222);
-    
     loading.value = true
-    console.log(3333333333333333);
     
-    const res = await studentLogin(loginForm.account, loginForm.password)
-    console.log(res);
+    let res
+    if (isAdminLogin.value) {
+      // 管理员登录
+      res = await adminLogin(loginForm.account, loginForm.password)
+    } else {
+      // 学生登录
+      res = await studentLogin(loginForm.account, loginForm.password)
+    }
     
     if (res.code === 200) {
-      store.commit('setUser', res.data)
+      // 设置用户信息和角色
+      const userData = {
+        ...res.data,
+        userType: isAdminLogin.value ? 'admin' : 'student'
+      }
+      store.commit('setUser', userData)
       store.dispatch('setToken', 'mock-token') // 这里可替换为后端返回的token
       ElMessage.success(res.msg)
-      router.push('/')
+      
+      // 根据用户类型跳转到不同页面
+      if (isAdminLogin.value) {
+        router.push('/admin') // 管理员页面
+      } else {
+        router.push('/') // 学生页面
+      }
     } else {
       ElMessage.error(res.msg)
     }
