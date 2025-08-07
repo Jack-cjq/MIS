@@ -15,5 +15,11 @@
       "dom.iterable",
       "scripthost"
     ]
-  }
+  },
+  "exclude": [
+    "node_modules",
+    "dist",
+    "**/*.min.js",
+    "src/views/admin/InternshipAdd.vue"
+  ]
 }

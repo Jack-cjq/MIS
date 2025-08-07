@@ -4,6 +4,77 @@
   </div>
 </template>
 
+<script>
+import { useStore } from 'vuex'
+
+export default {
+  name: 'App',
+  setup() {
+    const store = useStore()
+    
+    let refreshTimeout = null
+    let lastRefreshTime = 0
+    const REFRESH_COOLDOWN = 4 * 60 * 1000 // 4分钟冷却时间
+    
+    // 用户活动检测，自动刷新token（带防抖）
+    const handleUserActivity = () => {
+      const token = localStorage.getItem('token')
+      if (!token) return
+      
+      const now = Date.now()
+      
+      // 如果距离上次刷新时间不足4分钟，则不刷新
+      if (now - lastRefreshTime < REFRESH_COOLDOWN) {
+        return
+      }
+      
+      // 清除之前的定时器
+      if (refreshTimeout) {
+        clearTimeout(refreshTimeout)
+      }
+      
+      // 设置防抖延迟，避免频繁请求
+      refreshTimeout = setTimeout(async () => {
+        try {
+          const success = await store.dispatch('refreshToken')
+          if (success) {
+            lastRefreshTime = Date.now()
+          }
+        } catch (error) {
+          console.error('Token刷新失败:', error)
+        }
+      }, 2000) // 2秒防抖延迟
+    }
+    
+    // 监听用户活动（减少监听的事件类型）
+    const events = ['click', 'keypress'] // 只监听点击和按键事件
+    events.forEach(event => {
+      document.addEventListener(event, handleUserActivity, true)
+    })
+    
+    // 定期检查token状态（增加间隔时间）
+    setInterval(async () => {
+      const token = localStorage.getItem('token')
+      if (token) {
+        const now = Date.now()
+        if (now - lastRefreshTime >= REFRESH_COOLDOWN) {
+          try {
+            const success = await store.dispatch('refreshToken')
+            if (success) {
+              lastRefreshTime = Date.now()
+            }
+          } catch (error) {
+            console.error('定期Token刷新失败:', error)
+          }
+        }
+      }
+    }, 10 * 60 * 1000) // 改为每10分钟检查一次
+    
+    return {}
+  }
+}
+</script>
+
 <style>
 * {
   margin: 0;

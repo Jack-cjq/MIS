@@ -136,9 +136,16 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue'
-import { ElMessage } from 'element-plus'
-import { getCompetitionList, registerForCompetition, getMyCompetitions } from '@/api/competition'
+import { ref, reactive, onMounted, computed } from 'vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { Trophy, Document, Operation, Files, Plus } from '@element-plus/icons-vue'
+import {
+  addCompetition, updateCompetition, deleteCompetition, getMyCompetitions,
+  addPaper, updatePaper, deletePaper, getMyPapers,
+  addPatent, updatePatent, deletePatent, getMyPatents,
+  addProject, updateProject, deleteProject, getMyProjects,
+  searchCompetitions, getAllActiveCompetitions, registerForCompetition
+} from '@/api/competition'
 
 const showRegisterDialog = ref(false)
 const registerFormRef = ref()
@@ -185,12 +192,14 @@ const filteredCompetitions = computed(() => {
 
 const loadData = async () => {
   try {
-    const [competitionsData, myCompetitionsData] = await Promise.all([
-      getCompetitionList(),
-      getMyCompetitions()
+    const [competitions, papers, patents, projects] = await Promise.all([
+      getMyCompetitions(),
+      getMyPapers(),
+      getMyPatents(),
+      getMyProjects()
     ])
-    competitionList.value = competitionsData
-    myCompetitions.value = myCompetitionsData
+    competitionList.value = competitions
+    myCompetitions.value = competitions
   } catch (error) {
     console.error('加载数据失败:', error)
     // 使用模拟数据

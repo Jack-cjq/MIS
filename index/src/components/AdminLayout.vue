@@ -45,7 +45,7 @@
               <span>实习就业</span>
             </template>
             <el-menu-item index="/admin/internship/list">实习列表</el-menu-item>
-            <el-menu-item index="/admin/internship/add">添加实习</el-menu-item>
+            <el-menu-item index="/admin/internship/analysis">数据分析</el-menu-item>
           </el-sub-menu>
           
           <el-sub-menu index="/admin/competition">
@@ -103,9 +103,9 @@
             <el-dropdown @command="handleCommand">
               <span class="user-info">
                 <el-avatar :size="32" :src="userAvatar">
-                  {{ userInfo?.realName?.charAt(0) || userInfo?.username?.charAt(0) || 'A' }}
+                  {{ adminInfo?.realName?.charAt(0) || adminInfo?.username?.charAt(0) || adminInfo?.name?.charAt(0) || 'A' }}
                 </el-avatar>
-                <span class="username">{{ userInfo?.realName || userInfo?.username }}</span>
+                <span class="username">{{ adminInfo?.realName || adminInfo?.username || adminInfo?.name || '管理员' }}</span>
                 <el-icon><ArrowDown /></el-icon>
               </span>
               <template #dropdown>
@@ -128,10 +128,11 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, ref, onMounted } from 'vue'
 import { useStore } from 'vuex'
 import { useRouter } from 'vue-router'
 import { ElMessageBox } from 'element-plus'
+import request from '@/api/request'
 import {
   DataBoard,
   User,
@@ -147,8 +148,38 @@ import {
 const store = useStore()
 const router = useRouter()
 
-const userInfo = computed(() => store.state.user)
-const userAvatar = computed(() => userInfo.value?.avatar || '')
+// 存储管理员详细信息
+const adminInfo = ref(null)
+
+const userInfo = computed(() => {
+  const user = store.state.user
+  // console.log('当前用户信息:', user)
+  return user
+})
+
+const userAvatar = computed(() => adminInfo.value?.avatar || '')
+
+// 根据ID获取管理员详细信息
+const fetchAdminInfo = async () => {
+  if (userInfo.value?.id && userInfo.value?.userType === 'admin') {
+    try {
+      // 使用request工具调用后端API获取管理员详细信息
+      const result = await request.get(`/admin/${userInfo.value.id}`)
+      if (result.code === 200) {
+        adminInfo.value = result.data
+        // console.log('获取到的管理员信息:', adminInfo.value)
+      } else {
+        console.error('获取管理员信息失败:', result.msg)
+      }
+    } catch (error) {
+      console.error('获取管理员信息失败:', error)
+    }
+  }
+}
+
+onMounted(() => {
+  fetchAdminInfo()
+})
 
 const handleCommand = async (command) => {
   if (command === 'profile') {

@@ -49,4 +49,45 @@ export function deleteStudent(id) {
     url: `/student/delete/${id}`,
     method: 'delete'
   })
+}
+
+// 获取当前用户信息（用于页面刷新后恢复）
+export function getCurrentUser() {
+  return request({
+    url: '/student/current-user',
+    method: 'get'
+  })
+}
+
+// 获取个人信息（自动获取当前用户）
+export function getProfile() {
+  return request({
+    url: '/student/profile',
+    method: 'get'
+  })
+}
+
+// 更新个人信息
+export function updateProfile(data) {
+  return request({
+    url: '/student/profile/update',
+    method: 'put',
+    data
+  })
+}
+
+// 获取学习记录
+export function getStudyRecords() {
+  return request({
+    url: '/student/study-records',
+    method: 'get'
+  })
+}
+
+// 刷新token
+export function refreshToken() {
+  return request({
+    url: '/student/refresh-token',
+    method: 'post'
+  })
 } 

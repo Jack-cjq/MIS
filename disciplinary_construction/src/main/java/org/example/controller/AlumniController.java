@@ -5,6 +5,7 @@ import cn.hutool.core.date.LocalDateTimeUtil;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
+import org.example.annotation.CurrentUser;
 import org.example.exception.BusinessException;
 import org.example.model.AlumniModel;
 import org.example.response.ResponseCode;
@@ -16,6 +17,7 @@ import org.springframework.web.bind.annotation.*;
 import java.time.*;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @RestController
@@ -31,22 +33,27 @@ public class AlumniController {
 
     @Operation(summary = "添加校友信息")
     @PostMapping("/insertAlumni")
-    public ResponseResult<String> insertAlumni(@RequestBody AlumniModel alumniModel) {
+    public ResponseResult<String> insertAlumni(@RequestBody AlumniModel alumniModel, @CurrentUser Map<String, Object> currentUser) {
+        String userId = (String) currentUser.get("userId");
+        alumniModel.setStudentId(userId);
         alumniService.insertAlumni(alumniModel);
         return ResponseResult.success();
     }
 
     @Operation(summary = "更新校友信息")
     @PostMapping("/updateAlumni")
-    public ResponseResult<String> updateAlumni(@RequestBody AlumniModel alumniModel) {
+    public ResponseResult<String> updateAlumni(@RequestBody AlumniModel alumniModel, @CurrentUser Map<String, Object> currentUser) {
+        String userId = (String) currentUser.get("userId");
+        alumniModel.setStudentId(userId);
         alumniService.updateAlumni(alumniModel);
         return ResponseResult.success();
     }
 
-    @Operation(summary = "通过学号查询校友信息")
-    @PostMapping("/findAlumniByStudentId")
-    public ResponseResult<AlumniModel> findAlumniByStudentId(String studentId) {
-        AlumniModel alumni = alumniService.findAlumniByStudentId(studentId);
+    @Operation(summary = "获取当前用户的校友信息")
+    @PostMapping("/my-alumni-info")
+    public ResponseResult<AlumniModel> getMyAlumniInfo(@CurrentUser Map<String, Object> currentUser) {
+        String userId = (String) currentUser.get("userId");
+        AlumniModel alumni = alumniService.findAlumniByStudentId(userId);
         return ResponseResult.success(alumni);
     }
 

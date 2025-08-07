@@ -2,6 +2,7 @@ package org.example.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.example.annotation.CurrentUser;
 import org.example.model.CompetitionModel;
 import org.example.response.ResponseResult;
 import org.example.service.CompetitionService;
@@ -9,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/msi/competition")
@@ -21,14 +23,18 @@ public class CompetitionController {
 
     @Operation(summary = "添加学科竞赛")
     @PostMapping("/add")
-    public ResponseResult<CompetitionModel> addCompetition(@RequestBody CompetitionModel competition) {
+    public ResponseResult<CompetitionModel> addCompetition(@RequestBody CompetitionModel competition, @CurrentUser Map<String, Object> currentUser) {
+        String userId = (String) currentUser.get("userId");
+        competition.setStudentId(userId);
         CompetitionModel result = competitionService.addCompetition(competition);
         return ResponseResult.success(result);
     }
 
     @Operation(summary = "更新学科竞赛")
     @PutMapping("/update")
-    public ResponseResult<CompetitionModel> updateCompetition(@RequestBody CompetitionModel competition) {
+    public ResponseResult<CompetitionModel> updateCompetition(@RequestBody CompetitionModel competition, @CurrentUser Map<String, Object> currentUser) {
+        String userId = (String) currentUser.get("userId");
+        competition.setStudentId(userId);
         CompetitionModel result = competitionService.updateCompetition(competition);
         return ResponseResult.success(result);
     }
@@ -40,10 +46,11 @@ public class CompetitionController {
         return ResponseResult.success("删除成功");
     }
 
-    @Operation(summary = "获取学生的学科竞赛列表")
-    @GetMapping("/student/{studentId}")
-    public ResponseResult<List<CompetitionModel>> getStudentCompetitions(@PathVariable String studentId) {
-        List<CompetitionModel> competitions = competitionService.getStudentCompetitions(studentId);
+    @Operation(summary = "获取当前用户的学科竞赛列表")
+    @GetMapping("/my-competitions")
+    public ResponseResult<List<CompetitionModel>> getMyCompetitions(@CurrentUser Map<String, Object> currentUser) {
+        String userId = (String) currentUser.get("userId");
+        List<CompetitionModel> competitions = competitionService.getStudentCompetitions(userId);
         return ResponseResult.success(competitions);
     }
 

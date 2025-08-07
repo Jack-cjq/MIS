@@ -108,7 +108,7 @@
 <script setup>
 import {onMounted, reactive, ref} from 'vue'
 import {Search} from '@element-plus/icons-vue'
-import {updateAlumni, findAlumniByStudentId, insertAlumni} from '@/api/alumni'
+import {updateAlumni, getMyAlumniInfo, insertAlumni} from '@/api/alumni'
 import {CodeToText, regionData, TextToCode} from '@/utils/china-area-data.js'
 import {dayjs, ElMessage} from "element-plus";
 import {useStore} from "vuex";
@@ -158,7 +158,7 @@ const loadData = async () => {
   form.studentId = store.getters.user.studentId
   form.name = store.getters.user.name
   try {
-    let response = await findAlumniByStudentId(form.studentId);
+    let response = await getMyAlumniInfo();
     alumniData.value = response.data
   } catch (error) {
     console.error('加载数据失败:', error)

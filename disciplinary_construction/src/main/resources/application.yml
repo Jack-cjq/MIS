@@ -4,15 +4,35 @@ server:
     context-path: /SCSE@hbut
 
 spring:
+  application:
+    name: disciplinary-construction
+  profiles:
+    active: dev  # 默认使用开发环境配置
+  
+  # MongoDB配置 - 开发环境无认证
   data:
     mongodb:
-      # URI方式配置（推荐）
-      uri: mongodb://127.0.0.1:27017/msi?connectTimeoutMS=50000
-      # 或拆分属性配置：
-      # host: 127.0.0.1
-      # port: 27017
-      # database: msi
-      # connect-timeout: 50000  # 毫秒，短横线命名
+      host: localhost
+      port: 27017
+      database: disciplinary_construction
+      # 移除认证配置，使用无认证连接
+      # authentication-database: admin
+      # username: admin
+      # password: 123456
+  
+  # Redis配置
+  redis:
+    host: localhost
+    port: 6379
+    password: 
+    database: 0
+    timeout: 10000ms
+    lettuce:
+      pool:
+        max-active: 8
+        max-wait: -1ms
+        max-idle: 8
+        min-idle: 0
 
   servlet:
     multipart:
@@ -27,10 +47,23 @@ logging:
   level:
     org.springframework.data.mongodb: DEBUG
     com.mongodb.client: DEBUG
+    org.example.config: DEBUG
+    org.example.util: DEBUG
+    org.springframework.security: DEBUG
 
+# JWT配置
+jwt:
+  secret: your-secret-key-must-be-at-least-256-bits-long-for-production-use
+  expiration: 86400000  # 24小时，单位毫秒
+  refresh-threshold: 300000  # 5分钟，单位毫秒
+
+# Knife4j配置
 knife4j:
   enable: true
-  openapi:
-    title: MSI后台测试
-    description: "MSI后台测试"
-    concat: 信息化建设小组
+  setting:
+    language: zh-CN
+    enable-swagger-models: true
+    enable-document-manage: true
+    swagger-model-name: 实体类列表
+  basic:
+    enable: false

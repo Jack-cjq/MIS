@@ -8,7 +8,7 @@
           <div class="user-info">
             <el-dropdown>
               <span class="user-dropdown">
-                管理员 <el-icon><ArrowDown /></el-icon>
+                {{ userInfo.name || '学生' }} <el-icon><ArrowDown /></el-icon>
               </span>
               <template #dropdown>
                 <el-dropdown-menu>
@@ -68,9 +68,11 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useStore } from 'vuex'
 import { ElMessage } from 'element-plus'
+import { getCurrentUser } from '@/api/student'
 import { 
   House, 
   User, 
@@ -84,15 +86,63 @@ import {
 
 const route = useRoute()
 const router = useRouter()
+const store = useStore()
 
 const activeMenu = computed(() => route.path)
 
+// 获取用户信息
+const userInfo = computed(() => store.state.user || {})
+
 const logout = () => {
   localStorage.removeItem('token')
-  localStorage.removeItem('user')
+  store.commit('logout')
   ElMessage.success('退出登录成功')
   router.push('/login')
 }
+
+// 定时检查token是否过期
+let timer = null
+const checkTokenAndLogout = async () => {
+  const token = localStorage.getItem('token')
+  if (token) {
+    // 尝试刷新token
+    const refreshSuccess = await store.dispatch('refreshToken')
+    if (!refreshSuccess) {
+      ElMessage.warning('登录已过期，请重新登录')
+      router.push('/login')
+    }
+  } else {
+    ElMessage.warning('登录已过期，请重新登录')
+    router.push('/login')
+  }
+}
+
+onMounted(async () => {
+  // 如果store中没有用户信息，尝试从后端获取
+  if (!store.state.user && store.state.token) {
+    try {
+      const response = await getCurrentUser()
+      if (response.code === 200) {
+        store.commit('setUser', response.data)
+      } else {
+        // 获取用户信息失败，清除token并跳转到登录页
+        store.commit('logout')
+        router.push('/login')
+      }
+    } catch (error) {
+      console.error('获取用户信息失败:', error)
+      store.commit('logout')
+      router.push('/login')
+    }
+  }
+  
+  // 启动定时检查token（每5分钟检查一次）
+  timer = setInterval(checkTokenAndLogout, 5 * 60 * 1000)
+})
+
+onUnmounted(() => {
+  if (timer) clearInterval(timer)
+})
 </script>
 
 <style scoped>

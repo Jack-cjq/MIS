@@ -2,6 +2,7 @@ package org.example.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.example.annotation.CurrentUser;
 import org.example.model.ProjectModel;
 import org.example.response.ResponseResult;
 import org.example.service.ProjectService;
@@ -9,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/msi/project")
@@ -21,14 +23,18 @@ public class ProjectController {
 
     @Operation(summary = "添加项目")
     @PostMapping("/add")
-    public ResponseResult<ProjectModel> addProject(@RequestBody ProjectModel project) {
+    public ResponseResult<ProjectModel> addProject(@RequestBody ProjectModel project, @CurrentUser Map<String, Object> currentUser) {
+        String userId = (String) currentUser.get("userId");
+        project.setStudentId(userId);
         ProjectModel result = projectService.addProject(project);
         return ResponseResult.success(result);
     }
 
     @Operation(summary = "更新项目")
     @PutMapping("/update")
-    public ResponseResult<ProjectModel> updateProject(@RequestBody ProjectModel project) {
+    public ResponseResult<ProjectModel> updateProject(@RequestBody ProjectModel project, @CurrentUser Map<String, Object> currentUser) {
+        String userId = (String) currentUser.get("userId");
+        project.setStudentId(userId);
         ProjectModel result = projectService.updateProject(project);
         return ResponseResult.success(result);
     }
@@ -40,10 +46,11 @@ public class ProjectController {
         return ResponseResult.success("删除成功");
     }
 
-    @Operation(summary = "获取学生的项目列表")
-    @GetMapping("/student/{studentId}")
-    public ResponseResult<List<ProjectModel>> getStudentProjects(@PathVariable String studentId) {
-        List<ProjectModel> projects = projectService.getStudentProjects(studentId);
+    @Operation(summary = "获取当前用户的项目列表")
+    @GetMapping("/my-projects")
+    public ResponseResult<List<ProjectModel>> getMyProjects(@CurrentUser Map<String, Object> currentUser) {
+        String userId = (String) currentUser.get("userId");
+        List<ProjectModel> projects = projectService.getStudentProjects(userId);
         return ResponseResult.success(projects);
     }
 

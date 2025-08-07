@@ -12,6 +12,22 @@ export function adminLogin(username, password) {
   })
 }
 
+// 获取当前管理员信息
+export function getCurrentAdmin() {
+  return request({
+    url: '/admin/current-user',
+    method: 'get'
+  })
+}
+
+// 刷新管理员token
+export function refreshAdminToken() {
+  return request({
+    url: '/admin/refresh-token',
+    method: 'post'
+  })
+}
+
 // 获取管理员列表
 export function getAdminList() {
   return request({

@@ -41,9 +41,9 @@
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="出生日期" prop="birthday">
+            <el-form-item label="出生日期" prop="birthDate">
               <el-date-picker
-                v-model="profileForm.birthday"
+                v-model="profileForm.birthDate"
                 type="date"
                 placeholder="选择日期"
                 style="width: 100%"
@@ -59,8 +59,8 @@
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="班级" prop="class">
-              <el-input v-model="profileForm.class" />
+            <el-form-item label="班级" prop="className">
+              <el-input v-model="profileForm.className" />
             </el-form-item>
           </el-col>
         </el-row>
@@ -78,9 +78,36 @@
           </el-col>
         </el-row>
         
-        <el-form-item label="家庭住址" prop="address">
-          <el-input v-model="profileForm.address" />
-        </el-form-item>
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="家庭住址" prop="address">
+              <el-input v-model="profileForm.address" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="政治面貌" prop="politicalStatus">
+              <el-select v-model="profileForm.politicalStatus" placeholder="请选择政治面貌">
+                <el-option label="中共党员" value="中共党员" />
+                <el-option label="中共预备党员" value="中共预备党员" />
+                <el-option label="共青团员" value="共青团员" />
+                <el-option label="群众" value="群众" />
+              </el-select>
+            </el-form-item>
+          </el-col>
+        </el-row>
+        
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="导师" prop="supervisor">
+              <el-input v-model="profileForm.supervisor" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="研究方向" prop="researchDirection">
+              <el-input v-model="profileForm.researchDirection" />
+            </el-form-item>
+          </el-col>
+        </el-row>
         
         <el-form-item label="个人简介" prop="introduction">
           <el-input
@@ -118,23 +145,31 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, computed } from 'vue'
+import { useStore } from 'vuex'
 import { ElMessage } from 'element-plus'
-import { getProfile, updateProfile } from '@/api/profile'
+import { getProfile, updateProfile, getStudyRecords } from '@/api/student'
 
+const store = useStore()
 const formRef = ref()
 const editMode = ref(false)
+
+// 获取当前用户信息
+const userInfo = computed(() => store.state.user || {})
 
 const profileForm = reactive({
   studentId: '',
   name: '',
   gender: '',
-  birthday: '',
+  birthDate: '',
   major: '',
-  class: '',
+  className: '',
   phone: '',
   email: '',
   address: '',
+  politicalStatus: '',
+  supervisor: '',
+  researchDirection: '',
   introduction: ''
 })
 
@@ -150,6 +185,9 @@ const rules = {
   ],
   email: [
     { type: 'email', message: '请输入正确的邮箱地址', trigger: 'blur' }
+  ],
+  birthDate: [
+    { type: 'date', message: '请选择正确的出生日期', trigger: 'change' }
   ]
 }
 
@@ -157,49 +195,74 @@ const studyRecords = ref([])
 
 const loadProfile = async () => {
   try {
-    const data = await getProfile()
-    Object.assign(profileForm, data.profile)
-    studyRecords.value = data.studyRecords
+    // 获取个人信息（自动获取当前用户）
+    const profileResponse = await getProfile()
+    
+    if (profileResponse.code === 200) {
+      const profileData = profileResponse.data
+      // 将后端数据映射到表单字段
+      Object.assign(profileForm, {
+        studentId: profileData.studentId || '',
+        name: profileData.name || '',
+        gender: profileData.gender || '',
+        birthDate: profileData.birthDate ? new Date(profileData.birthDate) : '',
+        major: profileData.major || '',
+        className: profileData.className || '',
+        phone: profileData.phone || '',
+        email: profileData.email || '',
+        address: profileData.address || '',
+        politicalStatus: profileData.politicalStatus || '',
+        supervisor: profileData.supervisor || '',
+        researchDirection: profileData.researchDirection || '',
+        introduction: profileData.researchDirection || '热爱编程，擅长Java和Python开发'
+      })
+    } else {
+      ElMessage.error(profileResponse.msg || '获取个人信息失败')
+    }
+
+    // 获取学习记录
+    const recordsResponse = await getStudyRecords()
+    if (recordsResponse.code === 200) {
+      studyRecords.value = recordsResponse.data
+    }
   } catch (error) {
     console.error('加载个人信息失败:', error)
-    // 使用模拟数据
-    Object.assign(profileForm, {
-      studentId: '2021001',
-      name: '张三',
-      gender: '男',
-      birthday: '2002-05-15',
-      major: '计算机科学与技术',
-      class: '计科2101',
-      phone: '13800138000',
-      email: 'zhangsan@example.com',
-      address: '湖北省武汉市洪山区',
-      introduction: '热爱编程，擅长Java和Python开发'
-    })
-    studyRecords.value = [
-      {
-        semester: '2023-2024-1',
-        course: '数据结构',
-        score: 85,
-        credit: 4,
-        status: '已通过'
-      },
-      {
-        semester: '2023-2024-1',
-        course: '计算机网络',
-        score: 78,
-        credit: 3,
-        status: '已通过'
-      }
-    ]
+    ElMessage.error('加载个人信息失败')
+    // 如果API调用失败，只显示基本信息
+    if (userInfo.value) {
+      Object.assign(profileForm, {
+        studentId: userInfo.value.studentId || '',
+        name: userInfo.value.name || '',
+        // 其他敏感信息不显示，需要重新登录获取
+      })
+    }
   }
 }
 
 const handleEdit = async () => {
+  if (!editMode.value) {
+    editMode.value = true
+    return
+  }
+
   try {
     await formRef.value.validate()
-    await updateProfile(profileForm)
-    ElMessage.success('保存成功')
-    editMode.value = false
+    
+    // 准备要更新的数据
+    const updateData = {
+      ...profileForm,
+      birthDate: profileForm.birthDate instanceof Date ? profileForm.birthDate : new Date(profileForm.birthDate)
+    }
+    
+    const response = await updateProfile(updateData)
+    if (response.code === 200) {
+      ElMessage.success('保存成功')
+      editMode.value = false
+      // 更新store中的用户信息
+      store.commit('setUser', { ...userInfo.value, ...updateData })
+    } else {
+      ElMessage.error(response.msg || '保存失败')
+    }
   } catch (error) {
     console.error('保存失败:', error)
     ElMessage.error('保存失败')

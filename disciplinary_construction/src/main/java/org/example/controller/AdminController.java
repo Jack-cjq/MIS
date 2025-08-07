@@ -1,7 +1,9 @@
 package org.example.controller;
 
+import org.example.annotation.CurrentUser;
 import org.example.model.AdminModel;
 import org.example.service.AdminService;
+import org.example.util.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -15,6 +17,9 @@ import java.util.HashMap;
 public class AdminController {
     @Autowired
     private AdminService adminService;
+    
+    @Autowired
+    private JwtUtil jwtUtil;
 
     @PostMapping("/login")
     public ResponseEntity<Map<String, Object>> login(@RequestBody Map<String, String> loginForm) {
@@ -25,8 +30,20 @@ public class AdminController {
         AdminModel admin = adminService.login(username, password);
         
         if (admin != null) {
+            // 生成JWT token
+            String token = jwtUtil.generateToken(admin.getId(), "admin", admin.getUsername());
+            
+            // 返回token和基本用户信息
+            Map<String, Object> data = new HashMap<>();
+            data.put("token", token);
+            data.put("userId", admin.getId());
+            data.put("adminId", admin.getAdminId());
+            data.put("username", admin.getUsername());
+            data.put("realName", admin.getRealName());
+            data.put("userType", "admin");
+            
             result.put("code", 200);
-            result.put("data", admin);
+            result.put("data", data);
             result.put("msg", "管理员登录成功");
         } else {
             result.put("code", 401);
@@ -49,6 +66,97 @@ public class AdminController {
             result.put("data", null);
             result.put("msg", "创建失败: " + e.getMessage());
         }
+        return ResponseEntity.ok(result);
+    }
+
+    // 获取当前管理员信息
+    @GetMapping("/current-user")
+    public ResponseEntity<Map<String, Object>> getCurrentUser(@CurrentUser Map<String, Object> currentUser) {
+        Map<String, Object> result = new HashMap<>();
+        
+        try {
+            String userId = (String) currentUser.get("userId");
+            String userType = (String) currentUser.get("userType");
+            
+            if ("admin".equals(userType)) {
+                AdminModel admin = adminService.findById(userId);
+                if (admin != null) {
+                    // 只返回基本信息，不包含敏感信息
+                    Map<String, Object> userInfo = new HashMap<>();
+                    userInfo.put("id", admin.getId());
+                    userInfo.put("adminId", admin.getAdminId());
+                    userInfo.put("username", admin.getUsername());
+                    userInfo.put("realName", admin.getRealName());
+                    userInfo.put("userType", "admin");
+                    
+                    result.put("code", 200);
+                    result.put("data", userInfo);
+                    result.put("msg", "获取当前用户信息成功");
+                } else {
+                    result.put("code", 404);
+                    result.put("data", null);
+                    result.put("msg", "用户信息不存在");
+                }
+            } else {
+                result.put("code", 403);
+                result.put("data", null);
+                result.put("msg", "用户类型不匹配");
+            }
+        } catch (Exception e) {
+            result.put("code", 500);
+            result.put("data", null);
+            result.put("msg", "获取当前用户信息失败: " + e.getMessage());
+        }
+        return ResponseEntity.ok(result);
+    }
+
+    // Token刷新接口
+    @PostMapping("/refresh-token")
+    public ResponseEntity<Map<String, Object>> refreshToken(@RequestHeader("Authorization") String authHeader) {
+        Map<String, Object> result = new HashMap<>();
+        
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            result.put("code", 401);
+            result.put("data", null);
+            result.put("msg", "缺少Authorization头");
+            return ResponseEntity.ok(result);
+        }
+        
+        String token = authHeader.substring(7);
+        
+        try {
+            // 即使token即将过期，也允许刷新
+            if (jwtUtil.validateToken(token)) {
+                // 检查token是否即将过期
+                if (jwtUtil.isTokenNearExpiration(token)) {
+                    // 生成新的token
+                    String newToken = jwtUtil.refreshToken(token);
+                    
+                    Map<String, Object> data = new HashMap<>();
+                    data.put("token", newToken);
+                    data.put("userId", jwtUtil.getUserIdFromToken(newToken));
+                    data.put("userType", jwtUtil.getUserTypeFromToken(newToken));
+                    data.put("username", jwtUtil.getUsernameFromToken(newToken));
+                    
+                    result.put("code", 200);
+                    result.put("data", data);
+                    result.put("msg", "Token刷新成功");
+                } else {
+                    result.put("code", 200);
+                    result.put("data", null);
+                    result.put("msg", "Token尚未过期，无需刷新");
+                }
+            } else {
+                result.put("code", 401);
+                result.put("data", null);
+                result.put("msg", "Token无效或已过期");
+            }
+        } catch (Exception e) {
+            result.put("code", 500);
+            result.put("data", null);
+            result.put("msg", "Token刷新失败: " + e.getMessage());
+        }
+        
         return ResponseEntity.ok(result);
     }
 
