@@ -7,6 +7,14 @@
         <p>欢迎登录</p>
       </div>
       
+      <!-- 登录类型切换 -->
+      <div class="login-type-switch">
+        <el-radio-group v-model="isAdminLogin" size="large">
+          <el-radio-button :label="false">学生登录</el-radio-button>
+          <el-radio-button :label="true">管理员登录</el-radio-button>
+        </el-radio-group>
+      </div>
+      
       <el-form
         ref="loginFormRef"
         :model="loginForm"
@@ -17,7 +25,7 @@
         <el-form-item prop="username">
           <el-input
             v-model="loginForm.username"
-            placeholder="请输入用户名"
+            :placeholder="isAdminLogin ? '请输入管理员用户名' : '请输入学号'"
             prefix-icon="User"
             size="large"
           />
@@ -48,10 +56,10 @@
         </el-form-item>
       </el-form>
       
-             <div class="login-footer">
-         <p v-if="!isAdminLogin">学生默认账号：10240001 / 密码：123456</p>
-         <p v-else>管理员默认账号：admin / 密码：admin123</p>
-       </div>
+      <div class="login-footer">
+        <p v-if="!isAdminLogin">学生默认账号：10240001 / 密码：123456</p>
+        <p v-else>管理员默认账号：admin / 密码：admin123</p>
+      </div>
     </div>
   </div>
 </template>
@@ -174,6 +182,11 @@ const handleReset = () => {
 .login-header p {
   color: #909399;
   font-size: 14px;
+}
+
+.login-type-switch {
+  text-align: center;
+  margin-bottom: 20px;
 }
 
 .login-form {
