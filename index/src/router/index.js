@@ -136,6 +136,12 @@ const routes = [
         meta: { title: '添加党员' }
       },
       {
+        path: '/admin/daily/dailycontrol',
+        name: 'dailycontrol',
+        component: () => import('../views/admin/DailyControl.vue'),
+        meta: { title: '活动审批列表' }
+      },
+      {
         path: '/admin/papers',
         name: 'adminPapers',
         component: () => import('../views/admin/Papers.vue'),

@@ -76,6 +76,15 @@
             <el-menu-item index="/admin/party/list">党员列表</el-menu-item>
             <el-menu-item index="/admin/party/add">添加党员</el-menu-item>
           </el-sub-menu>
+
+          <el-sub-menu index="/admin/daily">
+            <template #title>
+              <el-icon><Flag /></el-icon>
+              <span>日常管理</span>
+            </template>
+            <el-menu-item index="/admin/daily/dailycontrol">活动审批列表</el-menu-item>
+
+          </el-sub-menu>
           
           <el-sub-menu index="/admin/system">
             <template #title>
