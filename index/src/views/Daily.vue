@@ -64,12 +64,17 @@
           <el-table-column label="时间" min-width="220">
             <template #default="scope">
               <span v-if="moduleKey !== 'honor'">
-                {{ scope.row.startDate || '-' }} <span v-if="scope.row.endDate">至 {{ scope.row.endDate }}</span>
+                {{ fmtDate(scope.row.startDate) || '-' }}
+                <span v-if="scope.row.endDate">至 {{ fmtDate(scope.row.endDate) }}</span>
               </span>
-              <span v-else>{{ scope.row.awardDate || '-' }}</span>
+              <span v-else>{{ fmtDate(scope.row.awardDate) || '-' }}</span>
             </template>
           </el-table-column>
-          <el-table-column :prop="moduleKey === 'honor' ? 'userId' : 'studentName'" label="发起人" min-width="140" />
+          <el-table-column
+              :prop="moduleKey === 'honor' ? 'userId' : 'studentName'"
+              label="发起人"
+              min-width="140"
+          />
           <el-table-column prop="auditStatus" label="状态" width="160">
             <template #default="scope">
               <el-tag :type="statusMeta(scope.row.auditStatus).type" effect="light" class="status-tag">
@@ -80,9 +85,9 @@
               </el-tag>
             </template>
           </el-table-column>
-          <el-table-column label="操作" width="120" align="right" fixed="right">
+          <el-table-column label="操作" width="140" align="right" fixed="right">
             <template #default="scope">
-              <el-button link type="primary" @click="viewDetail(scope.row)">查看</el-button>
+              <el-button link type="primary" @click="openDetail(scope.row)">查看</el-button>
             </template>
           </el-table-column>
         </el-table>
@@ -123,7 +128,9 @@
             <el-col :span="12"><el-form-item label="活动标题" prop="title"><el-input v-model="form.title" /></el-form-item></el-col>
             <el-col :span="12">
               <el-form-item label="活动类型" prop="activityType">
-                <el-select v-model="form.activityType"><el-option v-for="o in dict.activityType" :key="o.value" :label="o.label" :value="o.value" /></el-select>
+                <el-select v-model="form.activityType">
+                  <el-option v-for="o in dict.activityType" :key="o.value" :label="o.label" :value="o.value" />
+                </el-select>
               </el-form-item>
             </el-col>
           </el-row>
@@ -163,13 +170,100 @@
         <el-button type="primary" @click="submitCreate">确定</el-button>
       </template>
     </el-dialog>
+
+    <!-- 查看详情：大尺寸美观弹窗 -->
+    <el-dialog
+        v-model="detailVisible"
+        :title="moduleTitle + ' · 详情'"
+        width="1060px"
+        top="6vh"
+        destroy-on-close
+        class="detail-dialog"
+    >
+      <!-- 顶部信息条 -->
+      <div class="detail-header">
+        <div class="left">
+          <div class="main-title">{{ detailEntity.title || '-' }}</div>
+          <div class="sub">
+            <el-tag size="small" effect="plain">{{ moduleTitle }}</el-tag>
+            <span class="dot">·</span>
+            <span class="muted">发起人：</span><span>{{ detailEntity.studentName || detailEntity.userId || '-' }}</span>
+            <span class="dot">·</span>
+            <span class="muted">时间：</span>
+            <span v-if="moduleKey !== 'honor'">
+              {{ fmtDate(detailEntity.startDate) || '-' }}
+              <span v-if="detailEntity.endDate">至 {{ fmtDate(detailEntity.endDate) }}</span>
+            </span>
+            <span v-else>{{ fmtDate(detailEntity.awardDate) || '-' }}</span>
+          </div>
+        </div>
+        <div class="right">
+          <el-tag :type="statusMeta(detailEntity.auditStatus).type" effect="dark">
+            <el-icon class="mr4"><component :is="statusMeta(detailEntity.auditStatus).icon" /></el-icon>
+            {{ statusMeta(detailEntity.auditStatus).text }}
+          </el-tag>
+        </div>
+      </div>
+
+      <el-row :gutter="16">
+        <!-- 左侧：信息 -->
+        <el-col :span="16">
+          <el-card shadow="never" class="section-card">
+            <template #header><div class="section-title">详细信息</div></template>
+            <el-descriptions :column="2" border>
+              <template v-for="item in detailPairs" :key="item.label">
+                <el-descriptions-item :label="item.label">
+                  <template v-if="Array.isArray(item.value)">
+                    <el-space wrap><el-tag v-for="t in item.value" :key="t" effect="plain">{{ t }}</el-tag></el-space>
+                  </template>
+                  <template v-else>
+                    {{ item.value || '-' }}
+                  </template>
+                </el-descriptions-item>
+              </template>
+            </el-descriptions>
+
+            <el-divider>材料预览</el-divider>
+            <div class="proof-area" v-if="proofUrl">
+              <el-image
+                  v-if="isImage(proofUrl)"
+                  :src="proofUrl"
+                  fit="contain"
+                  :preview-src-list="[proofUrl]"
+                  style="width:100%;height:340px;border-radius:8px"
+              />
+              <div v-else class="file-box">
+                <el-icon><Link /></el-icon>
+                <div class="file-meta">
+                  <div class="name">{{ fileName(proofUrl) }}</div>
+                  <el-link :href="proofUrl" target="_blank" type="primary">在新窗口打开</el-link>
+                </div>
+              </div>
+            </div>
+            <div v-else class="empty-proof">未提供材料链接</div>
+          </el-card>
+        </el-col>
+
+        <!-- 右侧：小提示/状态 -->
+        <el-col :span="8">
+          <el-card shadow="never" class="section-card">
+            <template #header><div class="section-title">当前状态</div></template>
+            <el-result
+                :icon="statusResultIcon"
+                :title="statusMeta(detailEntity.auditStatus).text"
+                sub-title="如有更正，请联系辅导员或管理员"
+            />
+          </el-card>
+        </el-col>
+      </el-row>
+    </el-dialog>
   </div>
 </template>
 
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
-import { Clock, CircleCheck, CircleClose } from '@element-plus/icons-vue'
+import { Clock, CircleCheck, CircleClose, Link } from '@element-plus/icons-vue'
 
 // 字典
 const dict = {
@@ -200,9 +294,7 @@ const stat = computed(() => ({
 
 // 搜索
 const searchKey = ref('')
-const applySearch = () => {
-  // 如需后端搜索，在此传参请求；当前仅演示
-}
+const applySearch = () => {}
 
 // 新增
 const createVisible = ref(false)
@@ -237,20 +329,21 @@ const rules = reactive({
 })
 const openCreate = () => {
   createVisible.value = true
-  Object.assign(form,
-      moduleKey.value === 'academic' ? { ...initAcademic }
-          : moduleKey.value === 'daily' ? { ...initDaily }
-              : { ...initHonor })
+  Object.assign(
+      form,
+      moduleKey.value === 'academic' ? { ...initAcademic } :
+          moduleKey.value === 'daily' ? { ...initDaily } : { ...initHonor }
+  )
 }
 const submitCreate = async () => {
   await createFormRef.value.validate()
   const payload = { ...form }
-  allRows[moduleKey.value].unshift(payload) // TODO: 替换为真实接口
+  allRows[moduleKey.value].unshift(payload) // TODO: 调用后端保存
   createVisible.value = false
   ElMessage.success('提交成功，待审核')
 }
 
-// 状态渲染（更人性化）
+// 状态渲染
 const statusMeta = (v) => {
   const map = {
     pending: { text: '待审核', type: 'warning', icon: Clock },
@@ -259,27 +352,90 @@ const statusMeta = (v) => {
   }
   return map[v] || { text: v, type: 'info', icon: Clock }
 }
+const statusResultIcon = computed(() => {
+  const v = detailEntity.auditStatus
+  return v === 'approved' ? 'success' : v === 'rejected' ? 'error' : 'info'
+})
 
-// 查看
-const viewDetail = (row) => {
-  const txt = moduleKey.value === 'honor'
-      ? `【荣誉】${row.title}<br/>授予单位：${row.awardOrg || '-'}<br/>获奖日期：${row.awardDate || '-'}<br/>状态：${statusMeta(row.auditStatus).text}`
-      : `【${moduleTitle.value}】${row.title}<br/>开始：${row.startDate || '-'}  结束：${row.endDate || '-'}<br/>发起人：${row.studentName || row.userId || '-'}<br/>状态：${statusMeta(row.auditStatus).text}`
-  ElMessage.info({ message: txt, dangerouslyUseHTMLString: true })
+// 详情弹窗
+const detailVisible = ref(false)
+const detailEntity = reactive({})
+const openDetail = (row) => {
+  Object.assign(detailEntity, row)
+  detailVisible.value = true
 }
 
+// 详情展示的键值对
+const detailPairs = computed(() => {
+  const e = detailEntity
+  if (moduleKey.value === 'academic') {
+    return [
+      { label: '学生ID', value: e.studentId },
+      { label: '学生姓名', value: e.studentName },
+      { label: '活动类型', value: e.type },
+      { label: '主办方', value: e.organizer },
+      { label: '主讲人', value: e.speaker },
+      { label: '开始时间', value: fmtDate(e.startDate) },
+      { label: '结束时间', value: fmtDate(e.endDate) }
+    ]
+  } else if (moduleKey.value === 'daily') {
+    return [
+      { label: '学生ID', value: e.studentId },
+      { label: '学生姓名', value: e.studentName },
+      { label: '活动类型', value: e.activityType },
+      { label: '主办/授予', value: e.organizer },
+      { label: '级别', value: e.level },
+      { label: '开始时间', value: fmtDate(e.startDate) },
+      { label: '结束时间', value: fmtDate(e.endDate) }
+    ]
+  } else {
+    return [
+      { label: '学生ID', value: e.userId },
+      { label: '荣誉类别', value: e.category },
+      { label: '级别', value: e.level },
+      { label: '授予单位', value: e.awardOrg },
+      { label: '获奖日期', value: fmtDate(e.awardDate) },
+      { label: '荣誉描述', value: e.description },
+      { label: '标签', value: Array.isArray(e.tags) ? e.tags : (e.tags ? String(e.tags).split(',').map(s => s.trim()) : []) }
+    ]
+  }
+})
+
+// 附件/材料预览
+const proofUrl = computed(() => {
+  if (moduleKey.value === 'honor') return detailEntity.evidenceUrl
+  if (moduleKey.value === 'academic') return detailEntity.attachmentUrl
+  if (moduleKey.value === 'daily') return detailEntity.attachmentUrl
+  return ''
+})
+const isImage = (url) => /\.(png|jpe?g|gif|webp|bmp|svg)(\?.*)?$/i.test(url || '')
+const fileName = (url) => {
+  if (!url) return ''
+  try { return decodeURIComponent(url.split('/').pop()) } catch { return url }
+}
+
+// 工具
+const fmtDate = (d) => {
+  if (!d) return ''
+  const date = (d instanceof Date) ? d : new Date(d)
+  if (Number.isNaN(+date)) return String(d)
+  const y = date.getFullYear()
+  const m = String(date.getMonth()+1).padStart(2,'0')
+  const day = String(date.getDate()).padStart(2,'0')
+  return `${y}-${m}-${day}`
+}
 const onTabChange = () => { searchKey.value = '' }
 
 // mock 数据
 const loadMock = () => {
   allRows.academic = [
-    { title: '机器学习前沿讲座', studentId: '20231234', studentName: '张三', type: '讲座', organizer: '计算机学院', speaker: '李教授', startDate: '2025-03-01', endDate: '2025-03-01', attachmentUrl: '', auditStatus: 'pending' }
+    { title: '机器学习前沿讲座', studentId: '20231234', studentName: '张三', type: '讲座', organizer: '计算机学院', speaker: '李教授', startDate: '2025-03-01', endDate: '2025-03-01', attachmentUrl: 'https://dummyimage.com/900x420/edf2ff/222.png&text=%E6%97%A5%E7%A8%8B', auditStatus: 'pending' }
   ]
   allRows.daily = [
     { title: '志愿服务-马拉松', studentId: '20239876', studentName: '李四', activityType: 'training', organizer: '校团委', level: '校级', startDate: '2025-04-10', endDate: '2025-04-12', attachmentUrl: '', auditStatus: 'approved' }
   ]
   allRows.honor = [
-    { title: '数学建模国赛二等奖', userId: '20230001', category: '竞赛', level: '国家', awardOrg: '教育部', awardDate: '2025-05-15', description: '', evidenceUrl: '', tags: '数学建模, 二作', isPublic: true, auditStatus: 'pending' }
+    { title: '数学建模国赛二等奖', userId: '20230001', category: '竞赛', level: '国家', awardOrg: '教育部', awardDate: '2025-05-15', description: '团队荣誉', evidenceUrl: 'https://dummyimage.com/960x520/fff1f2/cc0000.png&text=%E8%AF%81%E4%B9%A6', tags: ['数学建模','二作'], isPublic: true, auditStatus: 'pending' }
   ]
 }
 onMounted(loadMock)
@@ -305,4 +461,30 @@ onMounted(loadMock)
 .ml8{margin-left:8px}
 .status-tag .el-icon{vertical-align:middle}
 .mr4{margin-right:4px}
+
+/* 详情弹窗：大尺寸 + 自适应 */
+.detail-dialog :deep(.el-dialog){
+  max-width:1280px;
+}
+@media (max-width:1280px){
+  .detail-dialog :deep(.el-dialog){ width:96vw !important; }
+}
+.detail-dialog :deep(.el-dialog__header){
+  background: linear-gradient(90deg,#eef2ff,#ffffff);
+  border-bottom:1px solid #eef2ff;
+}
+
+/* 详情弹窗内部样式 */
+.detail-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px}
+.detail-header .main-title{font-size:18px;font-weight:700;color:#1f2937}
+.detail-header .sub{margin-top:6px;color:#6b7280;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.detail-header .dot{margin:0 6px;color:#cbd5e1}
+.detail-header .muted{color:#94a3b8}
+
+.section-card{border:1px solid #eef2ff;background:rgba(255,255,255,.95)}
+.section-title{font-weight:600}
+.proof-area{margin-top:6px}
+.file-box{display:flex;gap:10px;align-items:center;padding:12px;border:1px dashed #e5e7eb;border-radius:8px;background:#fafafa}
+.file-meta .name{font-weight:600;margin-bottom:2px}
+.empty-proof{color:#94a3b8;background:#f8fafc;border:1px dashed #e5e7eb;padding:12px;border-radius:8px;text-align:center}
 </style>
