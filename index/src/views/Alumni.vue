@@ -1,353 +1,299 @@
 /* eslint-disable vue/multi-word-component-names */
 <template>
   <div class="alumni">
-    <el-row :gutter="20">
-      <el-col :span="16">
-        <el-card>
-          <template #header>
-            <div class="card-header">
-              <span>校友信息</span>
-              <div class="search-group">
-                <el-input
-                  v-model="searchKeyword"
-                  placeholder="搜索校友姓名或公司"
-                  style="width: 200px; margin-right: 10px"
-                  clearable
-                  @input="handleSearch"
-                >
-                  <template #prefix>
-                    <el-icon><Search /></el-icon>
-                  </template>
-                </el-input>
-                <el-select v-model="filterYear" placeholder="毕业年份" style="width: 120px">
-                  <el-option label="全部年份" value="" />
-                  <el-option label="2023年" value="2023" />
-                  <el-option label="2022年" value="2022" />
-                  <el-option label="2021年" value="2021" />
-                  <el-option label="2020年" value="2020" />
-                </el-select>
-              </div>
-            </div>
-          </template>
-          
-          <div class="alumni-list">
-            <div
-              v-for="alumni in filteredAlumni"
-              :key="alumni.id"
-              class="alumni-item"
-            >
-              <div class="alumni-avatar">
-                <el-avatar :size="60" :src="alumni.avatar">
-                  {{ alumni.name.charAt(0) }}
-                </el-avatar>
-              </div>
-              <div class="alumni-info">
-                <div class="alumni-header">
-                  <h3 class="alumni-name">{{ alumni.name }}</h3>
-                  <el-tag :type="alumni.gender === '男' ? 'primary' : 'success'">
-                    {{ alumni.gender }}
-                  </el-tag>
-                </div>
-                <div class="alumni-details">
-                  <div class="detail-item">
-                    <span class="label">毕业年份：</span>
-                    <span class="value">{{ alumni.graduationYear }}年</span>
-                  </div>
-                  <div class="detail-item">
-                    <span class="label">专业：</span>
-                    <span class="value">{{ alumni.major }}</span>
-                  </div>
-                  <div class="detail-item">
-                    <span class="label">现工作单位：</span>
-                    <span class="value">{{ alumni.company }}</span>
-                  </div>
-                  <div class="detail-item">
-                    <span class="label">职位：</span>
-                    <span class="value">{{ alumni.position }}</span>
-                  </div>
-                </div>
-                <div class="alumni-contact">
-                  <el-button type="primary" size="small" @click="contactAlumni(alumni)">
-                    联系校友
-                  </el-button>
-                  <el-button size="small" @click="viewProfile(alumni)">
-                    查看详情
-                  </el-button>
-                </div>
-              </div>
-            </div>
+    <el-card style="margin-right: 250px;margin-left: 250px">
+      <template #header>
+        <div class="card-header">
+          <span>校友信息</span>
+          <div class="search-group">
+            <el-button type="primary" :disabled="alumniData!==null" @click="insertAlumniDetail">新增校友信息</el-button>
+            <el-button type="danger" :disabled="alumniData===null" @click="updateAlumniDetail(alumniData)">
+              修改校友信息
+            </el-button>
           </div>
-        </el-card>
-      </el-col>
-      
-      <el-col :span="8">
-        <el-card>
-          <template #header>
-            <div class="card-header">
-              <span>校友活动</span>
-            </div>
-          </template>
-          
-          <div class="activity-list">
-            <div
-              v-for="activity in activities"
-              :key="activity.id"
-              class="activity-item"
-            >
-              <div class="activity-header">
-                <span class="activity-title">{{ activity.title }}</span>
-                <el-tag :type="getActivityStatusType(activity.status)" size="small">
-                  {{ activity.status }}
-                </el-tag>
-              </div>
-              <div class="activity-time">{{ activity.time }}</div>
-              <div class="activity-location">{{ activity.location }}</div>
-              <div class="activity-description">{{ activity.description }}</div>
-              <el-button 
-                type="primary" 
-                size="small" 
-                @click="joinActivity(activity)"
-                :disabled="activity.status !== '报名中'"
-              >
-                {{ activity.status === '报名中' ? '立即报名' : '活动结束' }}
-              </el-button>
-            </div>
-          </div>
-        </el-card>
-      </el-col>
-    </el-row>
+        </div>
+      </template>
 
-    <!-- 联系校友对话框 -->
-    <el-dialog v-model="showContactDialog" title="联系校友" width="500px">
-      <el-form :model="contactForm" :rules="contactRules" ref="contactFormRef" label-width="100px">
-        <el-form-item label="校友姓名">
-          <el-input v-model="contactForm.alumniName" disabled />
+      <el-descriptions border column="2" size="large" label-width="15%">
+        <el-descriptions-item label="姓名">{{ form.name }}</el-descriptions-item>
+        <el-descriptions-item label="学号">{{ form.studentId }}</el-descriptions-item>
+        <el-descriptions-item label="入学年份" width="30%">{{
+            alumniData === null ? '未填写' : alumniData.enrollmentDate
+          }}
+        </el-descriptions-item>
+        <el-descriptions-item label="毕业年份">{{
+            alumniData === null ? '未填写' : alumniData.graduationDate
+          }}
+        </el-descriptions-item>
+        <el-descriptions-item label="就业地区">
+          {{ alumniData === null ? '未填写' : alumniData.workLocation.province + " " + alumniData.workLocation.city + " " + alumniData.workLocation.district }}
+        </el-descriptions-item>
+        <el-descriptions-item label="所在行业">{{
+            alumniData === null ? '未填写' : alumniData.workField
+          }}
+        </el-descriptions-item>
+        <el-descriptions-item label="所在单位">{{
+            alumniData === null ? '未填写' : alumniData.workPlace
+          }}
+        </el-descriptions-item>
+        <el-descriptions-item label="岗位类型">{{
+            alumniData === null ? '未填写' : alumniData.jobType
+          }}
+        </el-descriptions-item>
+      </el-descriptions>
+    </el-card>
+
+    <!-- 新增信息对话框 -->
+    <el-dialog v-model="showAlumniInsertDialog" @closed="onDialogClose" title="新增校友信息" width="800px">
+      <el-form :model="form" :rules="formRules" ref="insertFormRef" label-width="100px">
+        <el-form-item label="姓名">
+          <el-input v-model="form.name" disabled/>
         </el-form-item>
-        <el-form-item label="联系方式" prop="contactMethod">
-          <el-radio-group v-model="contactForm.contactMethod">
-            <el-radio label="邮箱">邮箱</el-radio>
-            <el-radio label="微信">微信</el-radio>
-            <el-radio label="电话">电话</el-radio>
-          </el-radio-group>
+        <el-form-item label="学号">
+          <el-input v-model="form.studentId" disabled/>
         </el-form-item>
-        <el-form-item label="联系内容" prop="content">
-          <el-input
-            v-model="contactForm.content"
-            type="textarea"
-            :rows="4"
-            placeholder="请输入联系内容"
-          />
+        <el-form-item label="入学年份" prop="enrollmentDate">
+          <el-date-picker v-model="form.enrollmentDate" type="date" placeholder="选择入学年份"/>
         </el-form-item>
+        <el-form-item label="毕业年份" prop="graduationDate">
+          <el-date-picker v-model="form.graduationDate" type="date" placeholder="选择毕业年份"/>
+        </el-form-item>
+        <el-form-item label="就业地区" prop="workLocation">
+          <el-cascader :options="regionData" v-model="form.workLocation" placeholder="选择就业地区"/>
+        </el-form-item>
+        <el-form-item label="所在行业" prop="workField">
+          <el-input v-model="form.workField" type="textarea" :rows="3" placeholder="请输入所在行业"/>
+        </el-form-item>
+        <el-form-item label="所在单位" prop="workPlace">
+          <el-input v-model="form.workPlace" type="textarea" :rows="3" placeholder="请输入所在单位"/>
+        </el-form-item>
+        <el-form-item label="岗位类型" prop="jobType">
+          <el-input v-model="form.jobType" type="textarea" :rows="3" placeholder="请输入岗位类型"/>
+        </el-form-item>
+
       </el-form>
       <template #footer>
         <span class="dialog-footer">
-          <el-button @click="showContactDialog = false">取消</el-button>
-          <el-button type="primary" @click="submitContact">发送联系</el-button>
+          <el-button @click="showAlumniInsertDialog = false">取消</el-button>
+          <el-button type="primary" @click="submitInsertAlumni">确认</el-button>
         </span>
       </template>
     </el-dialog>
 
-    <!-- 校友详情对话框 -->
-    <el-dialog v-model="showProfileDialog" title="校友详情" width="600px">
-      <div v-if="selectedAlumni" class="alumni-profile">
-        <div class="profile-header">
-          <el-avatar :size="80" :src="selectedAlumni.avatar">
-            {{ selectedAlumni.name.charAt(0) }}
-          </el-avatar>
-          <div class="profile-info">
-            <h2>{{ selectedAlumni.name }}</h2>
-            <p>{{ selectedAlumni.position }} @ {{ selectedAlumni.company }}</p>
-          </div>
-        </div>
-        <el-divider />
-        <div class="profile-details">
-          <div class="detail-row">
-            <span class="detail-label">毕业年份：</span>
-            <span class="detail-value">{{ selectedAlumni.graduationYear }}年</span>
-          </div>
-          <div class="detail-row">
-            <span class="detail-label">专业：</span>
-            <span class="detail-value">{{ selectedAlumni.major }}</span>
-          </div>
-          <div class="detail-row">
-            <span class="detail-label">工作单位：</span>
-            <span class="detail-value">{{ selectedAlumni.company }}</span>
-          </div>
-          <div class="detail-row">
-            <span class="detail-label">职位：</span>
-            <span class="detail-value">{{ selectedAlumni.position }}</span>
-          </div>
-          <div class="detail-row">
-            <span class="detail-label">工作地点：</span>
-            <span class="detail-value">{{ selectedAlumni.location }}</span>
-          </div>
-          <div class="detail-row">
-            <span class="detail-label">个人简介：</span>
-            <span class="detail-value">{{ selectedAlumni.bio }}</span>
-          </div>
-        </div>
-      </div>
+    <!-- 修改信息对话框 -->
+    <el-dialog v-model="showAlumniUpdateDialog" @closed="onDialogClose" title="修改校友信息" width="800px">
+      <el-form :model="form" :rules="formRules" ref="updateFormRef" label-width="100px">
+        <el-form-item label="姓名">
+          <el-input v-model="form.name" disabled/>
+        </el-form-item>
+        <el-form-item label="学号">
+          <el-input v-model="form.studentId" disabled/>
+        </el-form-item>
+        <el-form-item label="入学年份" prop="enrollmentDate">
+          <el-date-picker v-model="form.enrollmentDate" type="date" placeholder="选择入学年份"/>
+        </el-form-item>
+        <el-form-item label="毕业年份" prop="graduationDate">
+          <el-date-picker v-model="form.graduationDate" type="date" placeholder="选择毕业年份"/>
+        </el-form-item>
+        <el-form-item label="就业地区" prop="workLocation">
+          <el-cascader :options="regionData" v-model="form.workLocation" placeholder="选择就业地区">
+          </el-cascader>
+        </el-form-item>
+        <el-form-item label="所在行业" prop="workField">
+          <el-input v-model="form.workField" type="textarea" :rows="3" placeholder="请输入所在行业"/>
+        </el-form-item>
+        <el-form-item label="所在单位" prop="workPlace">
+          <el-input v-model="form.workPlace" type="textarea" :rows="3" placeholder="请输入所在单位"/>
+        </el-form-item>
+        <el-form-item label="岗位类型" prop="jobType">
+          <el-input v-model="form.jobType" type="textarea" :rows="3" placeholder="请输入岗位类型"/>
+        </el-form-item>
+
+      </el-form>
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button @click="showAlumniUpdateDialog = false">取消</el-button>
+          <el-button type="primary" @click="submitUpdateAlumni">确认</el-button>
+        </span>
+      </template>
     </el-dialog>
+
   </div>
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue'
-import { ElMessage } from 'element-plus'
-import { Search } from '@element-plus/icons-vue'
-import { getAlumniList, getAlumniActivities, joinAlumniActivity } from '@/api/alumni'
+import {onMounted, reactive, ref} from 'vue'
+import {updateAlumni, getMyAlumniInfo, insertAlumni} from '@/api/alumni'
+import {CodeToText, regionData, TextToCode} from '@/utils/china-area-data.js'
+import {dayjs, ElMessage} from "element-plus";
+import {useStore} from "vuex";
 
-const showContactDialog = ref(false)
-const showProfileDialog = ref(false)
-const contactFormRef = ref()
-const searchKeyword = ref('')
-const filterYear = ref('')
-const selectedAlumni = ref(null)
+let store = useStore()
 
-const contactForm = reactive({
-  alumniName: '',
-  contactMethod: '邮箱',
-  content: ''
+const showAlumniInsertDialog = ref(false)
+const showAlumniUpdateDialog = ref(false)
+const insertFormRef = ref()
+const updateFormRef = ref()
+
+const form = reactive({
+  studentId: '',
+  name: '',
+  enrollmentDate: null,
+  graduationDate: null,
+  workLocation: [],
+  workField: '',
+  workPlace: '',
+  jobType: '',
 })
 
-const contactRules = {
-  contactMethod: [
-    { required: true, message: '请选择联系方式', trigger: 'change' }
+const formRules = reactive({
+  enrollmentDate: [
+    {required: true, message: '请选择入学年份', trigger: 'change'},
   ],
-  content: [
-    { required: true, message: '请输入联系内容', trigger: 'blur' }
+  graduationDate: [
+    {required: true, message: '请输入毕业年份', trigger: 'change'}
+  ],
+  workLocation: [
+    {required: true, message: '请选择就业地区', trigger: 'change'}
+  ],
+  workField: [
+    {required: true, message: '请输入所在行业', trigger: 'change'}
+  ],
+  workPlace: [
+    {required: true, message: '请输入所在单位', trigger: 'change'}
+  ],
+  jobType: [
+    {required: true, message: '请输入岗位类型', trigger: 'change'}
   ]
-}
-
-const alumniList = ref([])
-const activities = ref([])
-
-const filteredAlumni = computed(() => {
-  let filtered = alumniList.value
-  
-  if (searchKeyword.value) {
-    filtered = filtered.filter(alumni => 
-      alumni.name.includes(searchKeyword.value) ||
-      alumni.company.includes(searchKeyword.value)
-    )
-  }
-  
-  if (filterYear.value) {
-    filtered = filtered.filter(alumni => 
-      alumni.graduationYear.toString() === filterYear.value
-    )
-  }
-  
-  return filtered
 })
+
+const alumniData = ref(null)
 
 const loadData = async () => {
+  form.studentId = store.getters.user.studentId
+  form.name = store.getters.user.name
   try {
-    const [alumniData, activitiesData] = await Promise.all([
-      getAlumniList(),
-      getAlumniActivities()
-    ])
-    alumniList.value = alumniData
-    activities.value = activitiesData
+    let response = await getMyAlumniInfo();
+    alumniData.value = response.data
   } catch (error) {
     console.error('加载数据失败:', error)
-    // 使用模拟数据
-    alumniList.value = [
-      {
-        id: 1,
-        name: '张三',
-        gender: '男',
-        graduationYear: 2023,
-        major: '计算机科学与技术',
-        company: '腾讯科技',
-        position: '前端开发工程师',
-        location: '深圳',
-        avatar: '',
-        bio: '热爱编程，专注于前端技术开发，有丰富的Vue.js和React开发经验。'
-      },
-      {
-        id: 2,
-        name: '李四',
-        gender: '女',
-        graduationYear: 2022,
-        major: '软件工程',
-        company: '阿里巴巴',
-        position: '产品经理',
-        location: '杭州',
-        avatar: '',
-        bio: '专注于用户体验设计，有多个成功产品的设计经验。'
-      }
-    ]
-    activities.value = [
-      {
-        id: 1,
-        title: '校友返校日',
-        time: '2024-03-15',
-        location: '学校大礼堂',
-        description: '欢迎各位校友返校，共叙同窗情谊',
-        status: '报名中'
-      },
-      {
-        id: 2,
-        title: '职业发展分享会',
-        time: '2024-04-01',
-        location: '线上会议',
-        description: '邀请优秀校友分享职业发展经验',
-        status: '报名中'
-      }
-    ]
   }
 }
 
-const contactAlumni = (alumni) => {
-  contactForm.alumniName = alumni.name
-  showContactDialog.value = true
+const insertAlumniDetail = () => {
+  showAlumniInsertDialog.value = true
 }
 
-const viewProfile = (alumni) => {
-  selectedAlumni.value = alumni
-  showProfileDialog.value = true
+const updateAlumniDetail = (alumni) => {
+  form.enrollmentDate = new Date(alumni.enrollmentDate)
+  form.graduationDate = new Date(alumni.graduationDate)
+  form.workLocation = [
+    TextToCode[alumni.workLocation.province].code,
+    TextToCode[alumni.workLocation.province][alumni.workLocation.city].code,
+    TextToCode[alumni.workLocation.province][alumni.workLocation.city][alumni.workLocation.district].code,
+  ]
+  form.workField = alumni.workField
+  form.workPlace = alumni.workPlace
+  form.jobType = alumni.jobType
+  showAlumniUpdateDialog.value = true
 }
 
-const submitContact = async () => {
+const submitUpdateAlumni = async () => {
   try {
-    await contactFormRef.value.validate()
-    // 这里应该调用实际的API
-    ElMessage.success('联系请求已发送')
-    showContactDialog.value = false
-    Object.assign(contactForm, {
-      alumniName: '',
-      contactMethod: '邮箱',
-      content: ''
-    })
-  } catch (error) {
-    console.error('发送失败:', error)
-    ElMessage.error('发送失败')
+    await updateFormRef.value.validate();
+  } catch (fields) {
+    console.log('error submit!', fields)
+    return
   }
-}
 
-const joinActivity = async (activity) => {
+  if (form.enrollmentDate > form.graduationDate) {
+    ElMessage.warning('毕业年份不能小于入学年份！')
+    return;
+  }
+
+  let data = {
+    student: {
+      'studentId': form.studentId,
+      'name': form.name,
+    },
+    enrollmentDate: dayjs(form.enrollmentDate).format('YYYY-MM-DD'),
+    graduationDate: dayjs(form.graduationDate).format('YYYY-MM-DD'),
+    workLocation: {
+      'province': CodeToText[form.workLocation[0]],
+      'city': CodeToText[form.workLocation[1]],
+      'district': CodeToText[form.workLocation[2]]
+    },
+    workField: form.workField,
+    workPlace: form.workPlace,
+    jobType: form.jobType,
+  }
+
   try {
-    await joinAlumniActivity(activity.id)
-    ElMessage.success('报名成功')
-    loadData()
+    let response = await updateAlumni(data);
+    if (response.code === 200) {
+      ElMessage.success('修改成功')
+    } else {
+      ElMessage.error(response.message)
+    }
+    showAlumniUpdateDialog.value = false
   } catch (error) {
-    console.error('报名失败:', error)
-    ElMessage.error('报名失败')
+    ElMessage.error('修改失败')
   }
 }
 
-const handleSearch = () => {
-  // 搜索功能已通过计算属性实现
+const submitInsertAlumni = async () => {
+  try {
+    await insertFormRef.value.validate();
+  } catch (fields) {
+    console.log('error submit!', fields)
+    return
+  }
+
+  if (form.enrollmentDate > form.graduationDate) {
+    ElMessage.warning('毕业年份不能小于入学年份！')
+    return;
+  }
+
+  let data = {
+    student: {
+      'studentId': form.studentId,
+      'name': form.name,
+    },
+    enrollmentDate: dayjs(form.enrollmentDate).format('YYYY-MM-DD'),
+    graduationDate: dayjs(form.graduationDate).format('YYYY-MM-DD'),
+    workLocation: {
+      'province': CodeToText[form.workLocation[0]],
+      'city': CodeToText[form.workLocation[1]],
+      'district': CodeToText[form.workLocation[2]]
+    },
+    workField: form.workField,
+    workPlace: form.workPlace,
+    jobType: form.jobType,
+  }
+
+  try {
+    let response = await insertAlumni(data);
+    if (response.code === 200) {
+      ElMessage.success('添加成功')
+    } else {
+      ElMessage.error(response.message)
+    }
+    showAlumniInsertDialog.value = false
+  } catch (error) {
+    ElMessage.error('添加失败')
+  }
 }
 
-const getActivityStatusType = (status) => {
-  const statusMap = {
-    '报名中': 'success',
-    '进行中': 'primary',
-    '已结束': 'info'
-  }
-  return statusMap[status] || 'info'
+const onDialogClose = () => {
+  form.name = ''
+  form.studentId = ''
+  form.enrollmentDate = null
+  form.graduationDate = null
+  form.workLocation = []
+  form.workField = ''
+  form.workPlace = ''
+  form.jobType = ''
+  loadData()
 }
 
 onMounted(() => {
@@ -402,7 +348,7 @@ onMounted(() => {
 .alumni-name {
   margin: 0;
   color: #303133;
-  font-size: 16px;
+  font-size: 25px;
 }
 
 .alumni-details {
@@ -416,12 +362,14 @@ onMounted(() => {
 
 .label {
   color: #909399;
-  width: 80px;
+  width: 200px;
   flex-shrink: 0;
+  font-size: 15px;
 }
 
 .value {
   color: #606266;
+  font-size: 15px;
 }
 
 .alumni-contact {

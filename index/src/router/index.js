@@ -192,7 +192,7 @@ const routes = [
   {
     path: '/alumni-student',
     name: 'alumniStudent',
-    component: () => import('../views/Alumni-Student.vue'),
+    component: () => import('../views/Alumni.vue'),
     meta: { title: '校友-学生' }
   }
 ]

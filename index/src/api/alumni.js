@@ -24,20 +24,20 @@ export function updateAlumni(data) {
     return request.post('/alumni/updateAlumni', data)
 }
 
+export function updateAlumniByAdmin(data) {
+    return request.post('/alumni/updateAlumniByAdmin', data)
+}
+
 export function insertAlumni(data) {
     return request.post('/alumni/insertAlumni', data)
 }
 
-// 获取我的校友信息（自动获取当前用户）
-export function getMyAlumniInfo() {
-    return request.post('/alumni/my-alumni-info')
+// 管理员添加校友信息
+export function insertAlumniByAdmin(data) {
+    return request.post('/alumni/insertAlumniByAdmin', data)
 }
 
-// 根据学生ID获取校友信息（保留用于管理员功能）
-export function findAlumniByStudentId(studentId) {
-    return request.post(
-        '/alumni/findAlumniByStudentId',
-        {studentId: studentId},
-        {headers: {'Content-Type': 'application/x-www-form-urlencoded',}}
-    )
+// 获取我的校友信息（自动获取当前用户）
+export function getMyAlumniInfo() {
+    return request.post('/alumni/getMyAlumniInfo')
 }
