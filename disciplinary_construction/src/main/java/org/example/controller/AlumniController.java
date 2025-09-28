@@ -35,8 +35,20 @@ public class AlumniController {
     @PostMapping("/insertAlumni")
     public ResponseResult<String> insertAlumni(@RequestBody AlumniModel alumniModel, @CurrentUser Map<String, Object> currentUser) {
         String userId = (String) currentUser.get("userId");
+        System.out.println(currentUser);
         alumniModel.setStudentId(userId);
         alumniService.insertAlumni(alumniModel);
+        return ResponseResult.success();
+    }
+
+    @Operation(summary = "添加校友信息（管理员使用）")
+    @PostMapping("/insertAlumniByAdmin")
+    public ResponseResult<String> insertAlumniByAdmin(@RequestBody AlumniModel alumniModel, @CurrentUser Map<String, Object> currentUser) {
+        String userType = (String) currentUser.get("userType");
+        if (!userType.equals("admin")) {
+            return ResponseResult.error();
+        }
+        alumniService.insertAlumniByAdmin(alumniModel);
         return ResponseResult.success();
     }
 
@@ -49,8 +61,19 @@ public class AlumniController {
         return ResponseResult.success();
     }
 
+    @Operation(summary = "更新校友信息（管理员使用）")
+    @PostMapping("/updateAlumniByAdmin")
+    public ResponseResult<String> updateAlumniByAdmin(@RequestBody AlumniModel alumniModel, @CurrentUser Map<String, Object> currentUser) {
+        String userType = (String) currentUser.get("userType");
+        if (!userType.equals("admin")) {
+            return ResponseResult.error();
+        }
+        alumniService.updateAlumniByAdmin(alumniModel);
+        return ResponseResult.success();
+    }
+
     @Operation(summary = "获取当前用户的校友信息")
-    @PostMapping("/my-alumni-info")
+    @PostMapping("/getMyAlumniInfo")
     public ResponseResult<AlumniModel> getMyAlumniInfo(@CurrentUser Map<String, Object> currentUser) {
         String userId = (String) currentUser.get("userId");
         AlumniModel alumni = alumniService.findAlumniByStudentId(userId);

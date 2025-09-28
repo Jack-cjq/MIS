@@ -39,12 +39,7 @@ public class AlumniServiceImpl implements AlumniService {
 
     @Override
     public void insertAlumni(AlumniModel alumniModel) {
-        System.out.println(alumniModel);
-        //1.登录账号是否是此学生
-
-
-        //2.查询学生是否存在
-        StudentModel studentModel = studentRepository.findByStudentId(alumniModel.getStudentId());
+        StudentModel studentModel = studentRepository.findById(alumniModel.getStudentId()).orElse(null);
         if (studentModel == null) {
             throw new BusinessException(ResponseCode.STUDENT_NOT_FOUND);
         }
@@ -61,12 +56,29 @@ public class AlumniServiceImpl implements AlumniService {
     }
 
     @Override
-    public void updateAlumni(AlumniModel alumniModel) {
-        System.out.println(alumniModel);
-        //1.登录账号是否是此学生
+    public void insertAlumniByAdmin(AlumniModel alumniModel) {
+        StudentModel studentModel = studentRepository.findByStudentId(alumniModel.getStudent().getStudentId());
+        if (studentModel == null) {
+            throw new BusinessException(ResponseCode.STUDENT_NOT_FOUND);
+        }
+        if (!studentModel.getName().equals(alumniModel.getStudent().getName())) {
+            throw new BusinessException(ResponseCode.STUDENT_ID_NAME_ERROR);
+        }
+        //是否已经存在该学生信息
+        AlumniModel data = alumniRepository.findAlumniByStudentId(studentModel.getId());
+        if (data != null) {
+            throw new BusinessException(ResponseCode.ALUMNI_EXISTS_ERROR);
+        }
+        //进入数据库
+        alumniModel.setId(null);
+        alumniModel.setStudent(null);
+        alumniModel.setStudentId(studentModel.getId());
+        alumniRepository.insert(alumniModel);
+    }
 
-        //2.查询学生是否存在
-        StudentModel studentModel = studentRepository.findByStudentId(alumniModel.getStudentId());
+    @Override
+    public void updateAlumni(AlumniModel alumniModel) {
+        StudentModel studentModel = studentRepository.findById(alumniModel.getStudentId()).orElse(null);
         if (studentModel == null) {
             throw new BusinessException(ResponseCode.STUDENT_NOT_FOUND);
         }
@@ -82,22 +94,45 @@ public class AlumniServiceImpl implements AlumniService {
     }
 
     @Override
+    public void updateAlumniByAdmin(AlumniModel alumniModel) {
+        StudentModel studentModel = studentRepository.findByStudentId(alumniModel.getStudent().getStudentId());
+        if (studentModel == null) {
+            throw new BusinessException(ResponseCode.STUDENT_NOT_FOUND);
+        }
+        //是否已经存在该学生信息
+        AlumniModel data = alumniRepository.findAlumniByStudentId(studentModel.getId());
+        if (data == null) {
+            throw new BusinessException(ResponseCode.ALUMNI_NOT_FOUND_ERROR);
+        }
+        //进入数据库
+        alumniModel.setId(data.getId());
+        alumniModel.setStudent(null);
+        alumniModel.setStudentId(studentModel.getId());
+        alumniRepository.save(alumniModel);
+    }
+
+    @Override
     public AlumniModel findAlumniByStudentId(String studentId) {
         return alumniRepository.findAlumniByStudentId(studentId);
     }
 
     @Override
     public List<AlumniModel> searchAlumniList(String searchValue, Date searchYear, Integer currentPage, Integer pageSize) {
+        // 把 Alumni 的 studentId (String) 转成 ObjectId，存到一个临时字段 studentIdObj
+        AggregationOperation convertId = context -> new Document("$addFields",
+                new Document("studentIdObj", new Document("$toObjectId", "$studentId"))
+        );
+
         LookupOperation lookup = LookupOperation.newLookup()
                 .from("students")
-                .localField("studentId")
-                .foreignField("studentId")
+                .localField("studentIdObj")
+                .foreignField("_id")
                 .as("student");
 
         UnwindOperation unwind = Aggregation.unwind("student", true);
 
         Criteria criteria = new Criteria().orOperator(
-                Criteria.where("studentId").regex(searchValue, "i"),
+                Criteria.where("student.studentId").regex(searchValue, "i"),
                 Criteria.where("student.name").regex(searchValue, "i"),
                 Criteria.where("workPlace").regex(searchValue, "i")
         );
@@ -116,7 +151,7 @@ public class AlumniServiceImpl implements AlumniService {
 
         SkipOperation skipOp = Aggregation.skip((currentPage - 1) * pageSize);
         LimitOperation limitOp = Aggregation.limit(pageSize);
-        Aggregation aggregation = Aggregation.newAggregation(lookup, unwind, match, skipOp, limitOp);
+        Aggregation aggregation = Aggregation.newAggregation(convertId, lookup, unwind, match, skipOp, limitOp);
 
         // 执行聚合查询
         return mongoTemplate.aggregate(aggregation, "alumni", AlumniModel.class).getMappedResults();
@@ -124,16 +159,20 @@ public class AlumniServiceImpl implements AlumniService {
 
     @Override
     public Integer getTotalCount(String searchValue, Date searchYear) {
+        AggregationOperation convertId = context -> new Document("$addFields",
+                new Document("studentIdObj", new Document("$toObjectId", "$studentId"))
+        );
+
         LookupOperation lookup = LookupOperation.newLookup()
                 .from("students")
-                .localField("studentId")
-                .foreignField("studentId")
+                .localField("studentIdObj")
+                .foreignField("_id")
                 .as("student");
 
         UnwindOperation unwind = Aggregation.unwind("student", true);
 
         Criteria criteria = new Criteria().orOperator(
-                Criteria.where("studentId").regex(searchValue, "i"),
+                Criteria.where("student.studentId").regex(searchValue, "i"),
                 Criteria.where("student.name").regex(searchValue, "i"),
                 Criteria.where("workPlace").regex(searchValue, "i")
         );
@@ -151,7 +190,7 @@ public class AlumniServiceImpl implements AlumniService {
         }
 
         CountOperation count = Aggregation.count().as("total");
-        Aggregation aggregation = Aggregation.newAggregation(lookup, unwind, match, count);
+        Aggregation aggregation = Aggregation.newAggregation(convertId, lookup, unwind, match, count);
 
         AggregationResults<Document> result = mongoTemplate.aggregate(aggregation, "alumni", Document.class);
         Document countDoc = result.getUniqueMappedResult();
