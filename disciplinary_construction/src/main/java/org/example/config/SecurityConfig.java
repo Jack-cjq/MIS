@@ -33,7 +33,7 @@ public class SecurityConfig {
                 // 允许静态资源
                 .antMatchers("/uploads/**", "/static/**").permitAll()
                 // 允许Swagger文档
-                .antMatchers("/doc.html", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
+                .antMatchers("/doc.html", "/swagger-ui/**", "/v3/api-docs/**","/webjars/**").permitAll()
                 // 允许健康检查接口
                 .antMatchers("/actuator/**").permitAll()
                 // 其他所有请求需要认证
