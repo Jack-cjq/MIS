@@ -11,4 +11,6 @@ public interface ProjectRepository extends MongoRepository<ProjectModel, String>
     List<ProjectModel> findByStudentId(String studentId);
     List<ProjectModel> findByAuditStatus(String auditStatus);
     List<ProjectModel> findByStudentIdAndAuditStatus(String studentId, String auditStatus);
+
+    long countByAuditStatus(String auditStatus);
 }

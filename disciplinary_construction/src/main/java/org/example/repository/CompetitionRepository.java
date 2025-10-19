@@ -11,4 +11,6 @@ public interface CompetitionRepository extends MongoRepository<CompetitionModel,
     List<CompetitionModel> findByStudentId(String studentId);
     List<CompetitionModel> findByAuditStatus(String auditStatus);
     List<CompetitionModel> findByStudentIdAndAuditStatus(String studentId, String auditStatus);
+
+    long countByAuditStatus(String auditStatus);
 }

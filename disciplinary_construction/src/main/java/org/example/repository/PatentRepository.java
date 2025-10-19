@@ -11,4 +11,6 @@ public interface PatentRepository extends MongoRepository<PatentModel, String> {
     List<PatentModel> findByStudentId(String studentId);
     List<PatentModel> findByAuditStatus(String auditStatus);
     List<PatentModel> findByStudentIdAndAuditStatus(String studentId, String auditStatus);
+
+    long countByAuditStatus(String auditStatus);
 }

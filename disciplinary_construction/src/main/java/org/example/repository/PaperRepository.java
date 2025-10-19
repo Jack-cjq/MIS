@@ -11,4 +11,6 @@ public interface PaperRepository extends MongoRepository<PaperModel, String> {
     List<PaperModel> findByStudentId(String studentId);
     List<PaperModel> findByAuditStatus(String auditStatus);
     List<PaperModel> findByStudentIdAndAuditStatus(String studentId, String auditStatus);
+
+    long countByAuditStatus(String auditStatus);
 }

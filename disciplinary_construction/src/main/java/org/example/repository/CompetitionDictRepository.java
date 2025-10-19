@@ -9,8 +9,8 @@ import java.util.List;
 @Repository
 public interface CompetitionDictRepository extends MongoRepository<CompetitionDictModel, String> {
     List<CompetitionDictModel> findByCompetitionNameContaining(String keyword);
-    List<CompetitionDictModel> findByIsActiveTrue();
+    List<CompetitionDictModel> findByCompetitionStatus(String competitionStatus);
     CompetitionDictModel findByCompetitionName(String competitionName);
-    List<CompetitionDictModel> findByCompetitionLevelAndIsActiveTrue(String competitionLevel);
+    List<CompetitionDictModel> findByCompetitionLevelAndCompetitionStatus(String competitionLevel, String competitionStatus);
     CompetitionDictModel findBySerialNumber(Integer serialNumber);
 }

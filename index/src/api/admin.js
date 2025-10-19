@@ -93,4 +93,92 @@ export function checkPermission(adminId, permission) {
     url: `/admin/permission/${adminId}/${permission}`,
     method: 'get'
   })
-} 
+}
+
+// 获取所有竞赛数据（管理员）
+export const getAllCompetitions = () => {
+  return request({
+    url: '/admin/competitions',
+    method: 'get'
+  })
+}
+
+// 获取所有论文数据（管理员）
+export const getAllPapers = () => {
+  return request({
+    url: '/admin/papers',
+    method: 'get'
+  })
+}
+
+// 获取所有专利数据（管理员）
+export const getAllPatents = () => {
+  return request({
+    url: '/admin/patents',
+    method: 'get'
+  })
+}
+
+// 获取所有项目数据（管理员）
+export const getAllProjects = () => {
+  return request({
+    url: '/admin/projects',
+    method: 'get'
+  })
+}
+
+// 审核竞赛
+export const auditCompetition = (data) => {
+  return request({
+    url: `/admin/competitions/${data.id}/audit`,
+    method: 'put',
+    data: {
+      auditStatus: data.auditStatus,
+      auditComment: data.auditComment
+    }
+  })
+}
+
+// 审核论文
+export const auditPaper = (data) => {
+  return request({
+    url: `/admin/papers/${data.id}/audit`,
+    method: 'put',
+    data: {
+      auditStatus: data.auditStatus,
+      auditComment: data.auditComment
+    }
+  })
+}
+
+// 审核专利
+export const auditPatent = (data) => {
+  return request({
+    url: `/admin/patents/${data.id}/audit`,
+    method: 'put',
+    data: {
+      auditStatus: data.auditStatus,
+      auditComment: data.auditComment
+    }
+  })
+}
+
+// 审核项目
+export const auditProject = (data) => {
+  return request({
+    url: `/admin/projects/${data.id}/audit`,
+    method: 'put',
+    data: {
+      auditStatus: data.auditStatus,
+      auditComment: data.auditComment
+    }
+  })
+}
+
+// 获取待审核统计
+export const getAuditStats = () => {
+  return request({
+    url: '/admin/audit/stats',
+    method: 'get'
+  })
+}

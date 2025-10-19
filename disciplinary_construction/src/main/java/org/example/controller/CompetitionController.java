@@ -1,81 +1,161 @@
 package org.example.controller;
 
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.tags.Tag;
-import org.example.annotation.CurrentUser;
+
 import org.example.model.CompetitionModel;
-import org.example.response.ResponseResult;
 import org.example.service.CompetitionService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/msi/competition")
+@RequestMapping("/msi/competitions")
 @CrossOrigin
-@Tag(name = "学科竞赛管理", description = "学科竞赛相关接口")
 public class CompetitionController {
 
     @Autowired
     private CompetitionService competitionService;
 
-    @Operation(summary = "添加学科竞赛")
-    @PostMapping("/add")
-    public ResponseResult<CompetitionModel> addCompetition(@RequestBody CompetitionModel competition, @CurrentUser Map<String, Object> currentUser) {
-        String userId = (String) currentUser.get("userId");
-        competition.setStudentId(userId);
-        CompetitionModel result = competitionService.addCompetition(competition);
-        return ResponseResult.success(result);
+
+    // ==================== 学生端接口 ====================
+
+    /**
+     * 获取学生的竞赛数据
+     */
+    @GetMapping("/student/{studentId}")
+    public ResponseEntity<?> getStudentCompetitions(@PathVariable String studentId) {
+        try {
+            List<CompetitionModel> competitions = competitionService.getStudentCompetitions(studentId);
+            return ResponseEntity.ok(competitions);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("获取竞赛数据失败: " + e.getMessage());
+        }
     }
 
-    @Operation(summary = "更新学科竞赛")
-    @PutMapping("/update")
-    public ResponseResult<CompetitionModel> updateCompetition(@RequestBody CompetitionModel competition, @CurrentUser Map<String, Object> currentUser) {
-        String userId = (String) currentUser.get("userId");
-        competition.setStudentId(userId);
-        CompetitionModel result = competitionService.updateCompetition(competition);
-        return ResponseResult.success(result);
+    /**
+     * 添加竞赛
+     */
+    @PostMapping
+    public ResponseEntity<?> addCompetition(@RequestBody CompetitionModel competition) {
+        try {
+            if (competition.getAuditStatus() == null) {
+                competition.setAuditStatus("待审核");
+            }
+            CompetitionModel saved = competitionService.addCompetition(competition);
+            return ResponseEntity.ok(saved);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("添加竞赛失败: " + e.getMessage());
+        }
     }
 
-    @Operation(summary = "删除学科竞赛")
-    @DeleteMapping("/delete/{id}")
-    public ResponseResult<String> deleteCompetition(@PathVariable String id) {
-        competitionService.deleteCompetition(id);
-        return ResponseResult.success("删除成功");
+    /**
+     * 更新竞赛
+     */
+    @PutMapping("/{id}")
+    public ResponseEntity<?> updateCompetition(@PathVariable String id, @RequestBody CompetitionModel competition) {
+        try {
+            // 注意：这里改为 String 类型的 id
+            competition.setId(id);
+            CompetitionModel updated = competitionService.updateCompetition(competition);
+            return ResponseEntity.ok(updated);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("更新竞赛失败: " + e.getMessage());
+        }
     }
 
-    @Operation(summary = "获取当前用户的学科竞赛列表")
-    @GetMapping("/my-competitions")
-    public ResponseResult<List<CompetitionModel>> getMyCompetitions(@CurrentUser Map<String, Object> currentUser) {
-        String userId = (String) currentUser.get("userId");
-        List<CompetitionModel> competitions = competitionService.getStudentCompetitions(userId);
-        return ResponseResult.success(competitions);
+    /**
+     * 删除竞赛
+     */
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deleteCompetition(@PathVariable String id) {
+        try {
+            competitionService.deleteCompetition(id);
+            return ResponseEntity.ok("删除成功");
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("删除竞赛失败: " + e.getMessage());
+        }
     }
 
-    @Operation(summary = "获取待审核的学科竞赛列表")
-    @GetMapping("/pending")
-    public ResponseResult<List<CompetitionModel>> getPendingCompetitions() {
-        List<CompetitionModel> competitions = competitionService.getPendingCompetitions();
-        return ResponseResult.success(competitions);
+
+    // 获取单条竞赛记录
+    @GetMapping("/{id}")
+    public ResponseEntity<?> getCompetition(@PathVariable String id) {
+        try {
+            CompetitionModel competition = competitionService.getCompetitionById(id);
+            if (competition == null) {
+                return ResponseEntity.badRequest().body("竞赛不存在");
+            }
+            return ResponseEntity.ok(competition);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("获取竞赛失败: " + e.getMessage());
+        }
     }
 
-    @Operation(summary = "审核学科竞赛")
-    @PostMapping("/audit")
-    public ResponseResult<CompetitionModel> auditCompetition(
-            @RequestParam String id,
-            @RequestParam String auditStatus,
-            @RequestParam String auditComment,
-            @RequestParam String auditorId) {
-        CompetitionModel result = competitionService.auditCompetition(id, auditStatus, auditComment, auditorId);
-        return ResponseResult.success(result);
+    // 获取活跃的竞赛列表（用于下拉选择）
+    @GetMapping("/active")
+    public ResponseEntity<?> getActiveCompetitions() {
+        try {
+            List<CompetitionModel> competitions = competitionService.getActiveCompetitions();
+            return ResponseEntity.ok(competitions);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("获取活跃竞赛失败: " + e.getMessage());
+        }
     }
 
-    @Operation(summary = "获取所有学科竞赛")
-    @GetMapping("/all")
-    public ResponseResult<List<CompetitionModel>> getAllCompetitions() {
-        List<CompetitionModel> competitions = competitionService.getAllCompetitions();
-        return ResponseResult.success(competitions);
+    // 新增：搜索竞赛
+    @GetMapping("/search")
+    public ResponseEntity<?> searchCompetitions(@RequestParam Map<String, String> params) {
+        try {
+            List<CompetitionModel> competitions = competitionService.searchCompetitions(params);
+            return ResponseEntity.ok(competitions);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("搜索竞赛失败: " + e.getMessage());
+        }
+    }
+
+    // ==================== 管理员端接口 ====================
+
+    /**
+     * 获取所有竞赛数据（管理员）
+     */
+    @GetMapping("/admin/all")
+    public ResponseEntity<?> getAllCompetitions() {
+        try {
+            List<CompetitionModel> competitions = competitionService.getAllCompetitions();
+            return ResponseEntity.ok(competitions);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("获取竞赛数据失败: " + e.getMessage());
+        }
+    }
+
+    /**
+     * 审核竞赛
+     */
+    @PutMapping("/admin/{id}/audit")
+    public ResponseEntity<?> auditCompetition(@PathVariable String id, @RequestBody Map<String, String> auditData) {
+        try {
+            String auditStatus = auditData.get("auditStatus");
+            String auditComment = auditData.get("auditComment");
+            String auditorId = auditData.get("auditorId");
+            String auditorName = auditData.get("auditorName");
+            
+            CompetitionModel competition = competitionService.getCompetitionById(id);
+            if (competition == null) {
+                return ResponseEntity.badRequest().body("竞赛不存在");
+            }
+            
+            competition.setAuditStatus(auditStatus);
+            competition.setAuditComment(auditComment);
+            competition.setAuditorId(auditorId);
+            competition.setAuditorName(auditorName);
+
+            CompetitionModel updated = competitionService.saveCompetition(competition);
+            
+            return ResponseEntity.ok(updated);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("审核失败: " + e.getMessage());
+        }
     }
 }

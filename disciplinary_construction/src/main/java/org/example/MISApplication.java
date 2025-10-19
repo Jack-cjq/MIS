@@ -6,11 +6,15 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.ComponentScan;
 import org.example.service.Impl.StudentServeiceImpl;
 import org.example.service.Impl.AdminServiceImpl;
 import org.example.service.Impl.PartyMemberServiceImpl;
 
-@SpringBootApplication(exclude = DataSourceAutoConfiguration.class)
+@SpringBootApplication(
+    exclude = DataSourceAutoConfiguration.class,
+    scanBasePackages = "org.example"  // 扫描整个 org.example 包
+)
 
 public class MISApplication {
     public static void main(String[] args) {

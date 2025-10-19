@@ -13,5 +13,5 @@ public class CompetitionDictModel {
     private Integer serialNumber;       // 序号
     private String competitionName;     // 赛事名称
     private String competitionLevel;    // 赛事等级（重大赛事/重点赛事/一般赛事）
-    private Boolean isActive;           // 是否启用
+    private String competitionStatus = "启用";   // 默认"启用"
 }

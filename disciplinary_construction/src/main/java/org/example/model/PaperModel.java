@@ -39,6 +39,7 @@ public class PaperModel {
     private String auditStatus;         // 审核状态
     private String auditComment;        // 审核意见
     private String auditorId;           // 审核人ID
+    private String auditorName;         // 审核人姓名
     private LocalDateTime auditTime;    // 审核时间
 
     // 时间戳
