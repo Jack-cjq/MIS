@@ -176,7 +176,7 @@ public class CompetitionDictServiceImpl implements CompetitionDictService {
         competition.setSerialNumber(serialNumber);
         competition.setCompetitionName(competitionName);
         competition.setCompetitionLevel(competitionLevel);
-        competition.setIsActive(true);
+        competition.setCompetitionStatus("启用");  
         return competition;
     }
 
@@ -187,7 +187,7 @@ public class CompetitionDictServiceImpl implements CompetitionDictService {
 
     @Override
     public List<CompetitionDictModel> getAllActiveCompetitions() {
-        return competitionDictRepository.findByIsActiveTrue();
+        return competitionDictRepository.findByCompetitionStatus("启用"); 
     }
 
     @Override
@@ -197,7 +197,9 @@ public class CompetitionDictServiceImpl implements CompetitionDictService {
 
     @Override
     public CompetitionDictModel addCompetition(CompetitionDictModel competition) {
-        competition.setIsActive(true);
+        if (competition.getCompetitionStatus() == null) {
+            competition.setCompetitionStatus("启用");
+        }
         return competitionDictRepository.save(competition);
     }
 

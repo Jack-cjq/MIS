@@ -8,6 +8,8 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map; 
+import java.util.stream.Collectors;
 
 @Service
 public class PaperServiceImpl implements PaperService {
@@ -60,5 +62,80 @@ public class PaperServiceImpl implements PaperService {
     @Override
     public List<PaperModel> getAllPapers() {
         return paperRepository.findAll();
+    }
+
+    @Override
+    public PaperModel getPaperById(String id) {
+        return paperRepository.findById(id).orElse(null);
+    }
+
+    @Override
+    public List<PaperModel> getPapersByStudentId(String studentId) {
+        return getStudentPapers(studentId); 
+    }
+    
+    @Override
+    public PaperModel savePaper(PaperModel paper) {
+        if (paper.getId() == null) {
+            return addPaper(paper);
+        } else {
+            return updatePaper(paper);
+        }
+    }
+    
+    @Override
+    public void deletePaper(Long id) {
+        deletePaper(id.toString()); 
+    }
+    
+    @Override
+    public PaperModel getPaperById(Long id) {
+        return getPaperById(id.toString()); 
+    }
+
+    // ==================== 新增：搜索方法 ====================
+    @Override
+    public List<PaperModel> searchPapers(Map<String, String> params) {
+        String keyword = params.get("keyword");
+        String journal = params.get("journal");
+        String status = params.get("status");
+        
+        List<PaperModel> allPapers = paperRepository.findAll();
+        
+        return allPapers.stream()
+                .filter(paper -> {
+                    boolean matches = true;
+                    
+                    if (keyword != null && !keyword.isEmpty()) {
+                        matches = matches && (
+                            (paper.getPaperTitle() != null && paper.getPaperTitle().toLowerCase().contains(keyword.toLowerCase())) ||
+                            (paper.getStudentName() != null && paper.getStudentName().toLowerCase().contains(keyword.toLowerCase())) ||
+                            (paper.getDoi() != null && paper.getDoi().toLowerCase().contains(keyword.toLowerCase()))
+                        );
+                    }
+                    
+                    if (journal != null && !journal.isEmpty()) {
+                        matches = matches && journal.equals(paper.getJournalName());
+                    }
+                    
+                    if (status != null && !status.isEmpty()) {
+                        matches = matches && status.equals(paper.getAuditStatus());
+                    }
+                    
+                    return matches;
+                })
+                .collect(Collectors.toList());
+    }
+
+     /**
+     * 根据审核状态统计数量
+     */   
+    @Override
+    public int countByAuditStatus(String auditStatus) {
+        try {
+            return (int) paperRepository.countByAuditStatus(auditStatus);
+        } catch (Exception e) {
+            return 0;
+        }
     }
 }

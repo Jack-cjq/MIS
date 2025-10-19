@@ -1,81 +1,126 @@
 package org.example.controller;
 
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.tags.Tag;
-import org.example.annotation.CurrentUser;
 import org.example.model.PatentModel;
-import org.example.response.ResponseResult;
 import org.example.service.PatentService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/msi/patent")
+@RequestMapping("/msi/patents")
 @CrossOrigin
-@Tag(name = "专利管理", description = "专利相关接口")
 public class PatentController {
 
     @Autowired
     private PatentService patentService;
 
-    @Operation(summary = "添加专利")
-    @PostMapping("/add")
-    public ResponseResult<PatentModel> addPatent(@RequestBody PatentModel patent, @CurrentUser Map<String, Object> currentUser) {
-        String userId = (String) currentUser.get("userId");
-        patent.setStudentId(userId);
-        PatentModel result = patentService.addPatent(patent);
-        return ResponseResult.success(result);
+    // ==================== 学生端接口 ====================
+
+    @GetMapping("/student/{studentId}")
+    public ResponseEntity<?> getStudentPatents(@PathVariable String studentId) {
+        try {
+            List<PatentModel> patents = patentService.getPatentsByStudentId(studentId);
+            return ResponseEntity.ok(patents);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("获取专利数据失败: " + e.getMessage());
+        }
     }
 
-    @Operation(summary = "更新专利")
-    @PutMapping("/update")
-    public ResponseResult<PatentModel> updatePatent(@RequestBody PatentModel patent, @CurrentUser Map<String, Object> currentUser) {
-        String userId = (String) currentUser.get("userId");
-        patent.setStudentId(userId);
-        PatentModel result = patentService.updatePatent(patent);
-        return ResponseResult.success(result);
+    @PostMapping
+    public ResponseEntity<?> addPatent(@RequestBody PatentModel patent) {
+        try {
+            if (patent.getAuditStatus() == null) {
+                patent.setAuditStatus("待审核");
+            }
+            PatentModel saved = patentService.savePatent(patent);
+            return ResponseEntity.ok(saved);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("添加专利失败: " + e.getMessage());
+        }
     }
 
-    @Operation(summary = "删除专利")
-    @DeleteMapping("/delete/{id}")
-    public ResponseResult<String> deletePatent(@PathVariable String id) {
-        patentService.deletePatent(id);
-        return ResponseResult.success("删除成功");
+    @PutMapping("/{id}")
+    public ResponseEntity<?> updatePatent(@PathVariable String id, @RequestBody PatentModel patent) {
+        try {
+            patent.setId(id);
+            PatentModel updated = patentService.savePatent(patent);
+            return ResponseEntity.ok(updated);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("更新专利失败: " + e.getMessage());
+        }
     }
 
-    @Operation(summary = "获取当前用户的专利列表")
-    @GetMapping("/my-patents")
-    public ResponseResult<List<PatentModel>> getMyPatents(@CurrentUser Map<String, Object> currentUser) {
-        String userId = (String) currentUser.get("userId");
-        List<PatentModel> patents = patentService.getStudentPatents(userId);
-        return ResponseResult.success(patents);
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deletePatent(@PathVariable String id) {
+        try {
+            patentService.deletePatent(id);
+            return ResponseEntity.ok("删除成功");
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("删除专利失败: " + e.getMessage());
+        }
     }
 
-    @Operation(summary = "获取待审核的专利列表")
-    @GetMapping("/pending")
-    public ResponseResult<List<PatentModel>> getPendingPatents() {
-        List<PatentModel> patents = patentService.getPendingPatents();
-        return ResponseResult.success(patents);
+    @GetMapping("/{id}")
+    public ResponseEntity<?> getPatent(@PathVariable String id) {
+        try {
+            PatentModel patent = patentService.getPatentById(id);
+            if (patent == null) {
+                return ResponseEntity.badRequest().body("专利不存在");
+            }
+            return ResponseEntity.ok(patent);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("获取专利失败: " + e.getMessage());
+        }
     }
 
-    @Operation(summary = "审核专利")
-    @PostMapping("/audit")
-    public ResponseResult<PatentModel> auditPatent(
-            @RequestParam String id,
-            @RequestParam String auditStatus,
-            @RequestParam String auditComment,
-            @RequestParam String auditorId) {
-        PatentModel result = patentService.auditPatent(id, auditStatus, auditComment, auditorId);
-        return ResponseResult.success(result);
+    @GetMapping("/search")
+    public ResponseEntity<?> searchPatents(@RequestParam Map<String, String> params) {
+        try {
+            List<PatentModel> patents = patentService.searchPatents(params);
+            return ResponseEntity.ok(patents);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("搜索专利失败: " + e.getMessage());
+        }
     }
 
-    @Operation(summary = "获取所有专利")
-    @GetMapping("/all")
-    public ResponseResult<List<PatentModel>> getAllPatents() {
-        List<PatentModel> patents = patentService.getAllPatents();
-        return ResponseResult.success(patents);
+    // ==================== 管理员端接口 ====================
+
+    @GetMapping("/admin/all")
+    public ResponseEntity<?> getAllPatents() {
+        try {
+            List<PatentModel> patents = patentService.getAllPatents();
+            return ResponseEntity.ok(patents);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("获取专利数据失败: " + e.getMessage());
+        }
+    }
+
+    @PutMapping("/admin/{id}/audit")
+    public ResponseEntity<?> auditPatent(@PathVariable String id, @RequestBody Map<String, String> auditData) {
+        try {
+            String auditStatus = auditData.get("auditStatus");
+            String auditComment = auditData.get("auditComment");
+            String auditorId = auditData.get("auditorId"); 
+            String auditorName = auditData.get("auditorName"); 
+
+            PatentModel patent = patentService.getPatentById(id);
+            if (patent == null) {
+                return ResponseEntity.badRequest().body("专利不存在");
+            }
+            
+            patent.setAuditStatus(auditStatus);
+            patent.setAuditComment(auditComment);
+            patent.setAuditorId(auditorId);
+            patent.setAuditorName(auditorName);
+
+            PatentModel updated = patentService.savePatent(patent);
+            
+            return ResponseEntity.ok(updated);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("审核失败: " + e.getMessage());
+        }
     }
 }

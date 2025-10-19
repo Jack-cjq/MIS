@@ -69,6 +69,7 @@ const routes = [
         component: () => import('../views/admin/Dashboard.vue'),
         meta: { title: '管理员仪表板' }
       },
+      // ==================== 学生管理 ====================
       {
         path: '/admin/students/list',
         name: 'adminStudentsList',
@@ -82,6 +83,13 @@ const routes = [
         meta: { title: '添加学生' }
       },
       {
+        path: '/admin/students',
+        name: 'adminStudents',
+        component: () => import('../views/admin/StudentsList.vue'),
+        meta: { title: '学生管理' }
+      },
+      // ==================== 校友管理 ====================
+      {
         path: '/admin/alumni/list',
         name: 'adminAlumniList',
         component: () => import('../views/admin/AlumniList.vue'),
@@ -93,6 +101,7 @@ const routes = [
         component: () => import('../views/admin/AlumniAdd.vue'),
         meta: { title: '添加校友' }
       },
+      // ==================== 实习就业 ====================
       {
         path: '/admin/internship/list',
         name: 'adminInternshipList',
@@ -105,24 +114,53 @@ const routes = [
         component: () => import('../views/admin/InternshipAnalysis.vue'),
         meta: { title: '实习就业分析' }
       },
+      // ==================== 科创竞赛 ====================
+      // 竞赛管理
       {
-        path: '/admin/competition/list',
-        name: 'adminCompetitionList',
-        component: () => import('../views/admin/CompetitionList.vue'),
+        path: '/admin/innovation/competitions/list',
+        name: 'adminInnovationCompetitionsList',
+        component: () => import('../views/admin/innovation/Competitions.vue'),
         meta: { title: '竞赛列表' }
       },
       {
-        path: '/admin/competition/add',
-        name: 'adminCompetitionAdd',
-        component: () => import('../views/admin/CompetitionAdd.vue'),
-        meta: { title: '添加竞赛' }
-      },
-      {
-        path: '/admin/competition/dict',
-        name: 'adminCompetitionDict',
-        component: () => import('../views/admin/CompetitionDict.vue'),
+        path: '/admin/innovation/competitions/dict',
+        name: 'adminInnovationCompetitionsDict',
+        component: () => import('../views/admin/innovation/CompetitionDict.vue'),
         meta: { title: '竞赛字典管理' }
       },
+      
+      // 项目管理
+      {
+        path: '/admin/innovation/projects/list',
+        name: 'adminInnovationProjectsList',
+        component: () => import('../views/admin/innovation/Projects.vue'),
+        meta: { title: '项目列表' }
+      },
+      
+      // 论文管理
+      {
+        path: '/admin/innovation/papers/list',
+        name: 'adminInnovationPapersList',
+        component: () => import('../views/admin/innovation/Papers.vue'),
+        meta: { title: '论文列表' }
+      },
+      
+      // 专利管理
+      {
+        path: '/admin/innovation/patents/list',
+        name: 'adminInnovationPatentsList',
+        component: () => import('../views/admin/innovation/Patents.vue'),
+        meta: { title: '专利列表' }
+      },
+      
+      // 数据统计
+      {
+        path: '/admin/innovation/statistics',
+        name: 'adminInnovationStatistics',
+        component: () => import('../views/admin/innovation/Statistics.vue'),
+        meta: { title: '科创数据统计' }
+      },
+      // ==================== 党员管理 ====================
       {
         path: '/admin/party/list',
         name: 'adminPartyList',
@@ -135,36 +173,15 @@ const routes = [
         component: () => import('../views/admin/PartyAdd.vue'),
         meta: { title: '添加党员' }
       },
+      // ==================== 日常管理 ====================
       {
         path: '/admin/daily/dailycontrol',
         name: 'dailycontrol',
         component: () => import('../views/admin/DailyControl.vue'),
         meta: { title: '活动审批列表' }
       },
-      {
-        path: '/admin/papers',
-        name: 'adminPapers',
-        component: () => import('../views/admin/Papers.vue'),
-        meta: { title: '论文管理' }
-      },
-      {
-        path: '/admin/patents',
-        name: 'adminPatents',
-        component: () => import('../views/admin/Patents.vue'),
-        meta: { title: '专利管理' }
-      },
-      {
-        path: '/admin/projects',
-        name: 'adminProjects',
-        component: () => import('../views/admin/Projects.vue'),
-        meta: { title: '项目管理' }
-      },
-      {
-        path: '/admin/students',
-        name: 'adminStudents',
-        component: () => import('../views/admin/StudentsList.vue'),
-        meta: { title: '学生管理' }
-      },
+      
+      // ==================== 管理员管理 ====================
       {
         path: '/admin/admins',
         name: 'adminAdmins',
@@ -176,7 +193,7 @@ const routes = [
         name: 'adminProfile',
         component: () => import('../views/admin/Profile.vue'),
         meta: { title: '管理员个人信息' }
-      }
+      },
     ]
   },
   

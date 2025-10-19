@@ -8,6 +8,8 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors; 
 
 @Service
 public class PatentServiceImpl implements PatentService {
@@ -60,5 +62,80 @@ public class PatentServiceImpl implements PatentService {
     @Override
     public List<PatentModel> getAllPatents() {
         return patentRepository.findAll();
+    }
+
+    @Override
+    public List<PatentModel> getPatentsByStudentId(String studentId) {
+        return getStudentPatents(studentId);
+   }
+
+    @Override
+    public PatentModel savePatent(PatentModel patent) {
+        if (patent.getId() == null) {
+            return addPatent(patent);
+        } else {
+            return updatePatent(patent);
+        }
+    }
+
+    @Override
+    public void deletePatent(Long id) {
+        deletePatent(id.toString());
+    }
+
+    @Override
+    public PatentModel getPatentById(Long id) {
+        return patentRepository.findById(id.toString()).orElse(null);
+    }
+
+    @Override
+    public PatentModel getPatentById(String id) {
+        return patentRepository.findById(id).orElse(null);
+    }
+
+    // ==================== 搜索方法 ====================
+    @Override
+    public List<PatentModel> searchPatents(Map<String, String> params) {
+        String keyword = params.get("keyword");
+        String patentType = params.get("patentType");
+        String status = params.get("status");
+
+        List<PatentModel> allPatents = patentRepository.findAll();
+
+        return allPatents.stream()
+                .filter(patent -> {
+                    boolean matches = true;
+                    
+                    if (keyword != null && !keyword.isEmpty()) {
+                        matches = matches && (
+                            (patent.getPatentTitle() != null && patent.getPatentTitle().toLowerCase().contains(keyword.toLowerCase())) ||
+                            (patent.getStudentName() != null && patent.getStudentName().toLowerCase().contains(keyword.toLowerCase())) ||
+                            (patent.getPatentNumber() != null && patent.getPatentNumber().toLowerCase().contains(keyword.toLowerCase()))
+                        );
+                    }
+                    
+                    if (patentType != null && !patentType.isEmpty()) {
+                        matches = matches && patentType.equals(patent.getPatentType());
+                    }
+                    
+                    if (status != null && !status.isEmpty()) {
+                        matches = matches && status.equals(patent.getAuditStatus());
+                    }
+                    
+                    return matches;
+                })
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * 根据审核状态统计数量
+     */
+    @Override
+    public int countByAuditStatus(String auditStatus) {
+        try {
+            return (int) patentRepository.countByAuditStatus(auditStatus);
+        } catch (Exception e) {
+            return 0;
+        }
     }
 }
